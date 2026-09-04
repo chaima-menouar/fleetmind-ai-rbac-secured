@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install Poetry
+        run: pipx install poetry
+      - name: Install dependencies
+        working-directory: backend
+        run: poetry install --no-interaction
+      - name: Validate and lint
+        working-directory: backend
+        run: |
+          poetry check
+          poetry run ruff check app tests scripts
+          poetry run mypy app
+      - name: Test
+        working-directory: backend
+        run: poetry run pytest
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Typecheck and build
+        working-directory: frontend
+        run: npm run build
+
+  infrastructure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            cdk/package-lock.json
+      - name: Build frontend asset
+        working-directory: frontend
+        run: npm ci && npm run build
+      - name: Validate CDK
+        working-directory: cdk
+        run: npm ci && npm run build && npm run synth

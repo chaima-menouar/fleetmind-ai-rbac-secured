@@ -1,0 +1,26 @@
+### Health
+GET http://localhost:8000/health
+
+### Shared assistants
+GET http://localhost:8000/api/bots?shared_only=true
+
+### Chat
+POST http://localhost:8000/api/chat/message
+Content-Type: application/json
+
+{
+  "bot_id": "technician",
+  "content": "Help me triage the battery warning on FM-4410."
+}
+
+### Fleet overview
+GET http://localhost:8000/api/fleet/summary
+
+### Maintenance agent
+POST http://localhost:8000/api/agents/run
+Content-Type: application/json
+
+{
+  "task_type": "maintenance_triage",
+  "vehicle_id": "FM-4410"
+}

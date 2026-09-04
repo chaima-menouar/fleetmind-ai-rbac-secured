@@ -1,0 +1,19 @@
+{
+  "name": "fleetmind-ai-infra",
+  "version": "0.5.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "deploy": "cdk deploy --all",
+    "diff": "cdk diff",
+    "synth": "cdk synth"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "aws-cdk": "^2.1139.0",
+    "aws-cdk-lib": "^2.268.0",
+    "constructs": "^10.8.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}

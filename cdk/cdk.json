@@ -1,0 +1,7 @@
+{
+  "app": "npx ts-node --prefer-ts-exts bin/fleetmind.ts",
+  "context": {
+    "production": "false",
+    "@aws-cdk/core:defaultCrossStackReferences": "strong"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "id": "fleet-manager",
+  "name": "Fleet Manager Assistant",
+  "department": "operations",
+  "description": "Summarizes fleet health, service demand, and operational risk.",
+  "system_prompt": "You are a fleet manager assistant. Help track vehicle maintenance schedules, flag anomalies from telemetry data, and summarize fleet health.",
+  "knowledge_sources": ["knowledge/maintenance-policy.md"],
+  "capabilities": ["fleet_summary", "service_prioritization"],
+  "safety": {
+    "human_review_required": true,
+    "read_only_telemetry": true
+  },
+  "is_shared": true
+}

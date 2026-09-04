@@ -1,0 +1,55 @@
+{
+  "model_version": "aps-hgb-1.0.0",
+  "trained_at": "2026-09-03T21:16:35.259730+00:00",
+  "algorithm": "Calibrated HistGradientBoostingClassifier",
+  "dataset": {
+    "name": "APS Failure at Scania Trucks",
+    "source": "https://archive.ics.uci.edu/static/public/421/aps%2Bfailure%2Bat%2Bscania%2Btrucks.zip",
+    "doi": "https://doi.org/10.24432/C51S51",
+    "archive_sha256": "5504d0402f54faaf97ac0ca085a621645763f5cfea2eb29c592b057d43d4db89",
+    "license_catalog": "CC BY 4.0",
+    "train_rows": 60000,
+    "test_rows": 16000,
+    "features": 170,
+    "train_positive_rows": 1000,
+    "test_positive_rows": 375
+  },
+  "training": {
+    "random_state": 42,
+    "fit_rows": 42000,
+    "calibration_rows": 9000,
+    "threshold_rows": 9000,
+    "decision_threshold": 0.036000000000000004,
+    "validation_cost": 5380,
+    "false_positive_cost": 10,
+    "false_negative_cost": 500
+  },
+  "metrics": {
+    "precision": 0.5394126738794436,
+    "recall": 0.9306666666666666,
+    "f1": 0.6829745596868885,
+    "balanced_accuracy": 0.9557973333333334,
+    "roc_auc": 0.9916048213333333,
+    "average_precision": 0.8660546660753411,
+    "true_negatives": 15327,
+    "false_positives": 298,
+    "false_negatives": 26,
+    "true_positives": 349,
+    "official_cost": 15980,
+    "all_negative_baseline_cost": 187500,
+    "cost_reduction_percent": 91.47733333333333
+  },
+  "runtime": {
+    "python": "3.12.13",
+    "scikit_learn": "1.9.0",
+    "numpy": "2.5.2",
+    "pandas": "3.0.5"
+  },
+  "limitations": [
+    "The 170 operational features are anonymized by the dataset owner.",
+    "The score estimates APS-related failure risk, not general vehicle failure.",
+    "Performance is measured on the supplied historical test split.",
+    "The model is a portfolio demonstration and not approved for safety decisions."
+  ],
+  "artifact_sha256": "b2285b8a24d3c5b35c53a784311aaf738fb9939ab6afc5d832957aec104288d5"
+}
