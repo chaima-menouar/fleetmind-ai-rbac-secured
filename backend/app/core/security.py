@@ -14,10 +14,7 @@ from fastapi import Depends, HTTPException, Request, status
 
 from app.core.config import settings
 from app.models.schemas import CurrentUser, UserRole
-from app.services.cognito_auth import (
-    CognitoAuthError,
-    current_user as cognito_current_user,
-)
+from app.services.cognito_auth import CognitoAuthError, current_user as cognito_current_user
 
 _DEMO_SIGNING_KEY = (settings.demo_auth_secret or secrets.token_urlsafe(48)).encode()
 
