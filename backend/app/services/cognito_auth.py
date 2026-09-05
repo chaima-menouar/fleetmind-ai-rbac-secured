@@ -66,8 +66,6 @@ def start_viewer_signup(display_name: str, email: str, password: str) -> None:
             UserAttributes=[
                 {"Name": "email", "Value": normalized_email},
                 {"Name": "name", "Value": display_name.strip()},
-                {"Name": "custom:role", "Value": UserRole.VIEWER.value},
-                {"Name": "custom:department", "Value": "operations"},
             ],
         )
     except ClientError as exc:
