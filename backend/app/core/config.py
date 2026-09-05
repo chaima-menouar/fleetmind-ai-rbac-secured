@@ -18,11 +18,14 @@ class Settings(BaseSettings):
     app_version: str = "0.5.0"
     environment: str = "development"
     demo_mode: bool = True
+    aws_free_tier_only: bool = True
     llm_provider: str = "demo"
     rag_provider: str = "local"
     aws_region: str = "us-east-1"
     bedrock_model_id: str = "amazon.nova-lite-v1:0"
     bedrock_knowledge_base_id: str = ""
+    bedrock_guardrail_id: str = ""
+    bedrock_guardrail_version: str = "DRAFT"
     rag_top_k: int = 5
     cognito_client_id: str = ""
     cognito_client_secret: str = ""
@@ -70,8 +73,30 @@ class Settings(BaseSettings):
         return bool(self.cognito_client_id.strip())
 
     @property
+    def effective_llm_provider(self) -> str:
+        """Paid generative inference is disabled while free-tier-only mode is on."""
+        return "demo" if self.aws_free_tier_only else self.llm_provider
+
+    @property
+    def effective_rag_provider(self) -> str:
+        """Cloud vector retrieval is disabled while free-tier-only mode is on."""
+        return "local" if self.aws_free_tier_only else self.rag_provider
+
+    @property
     def bedrock_kb_enabled(self) -> bool:
-        return self.rag_provider == "bedrock_kb" and bool(self.bedrock_knowledge_base_id.strip())
+        return (
+            not self.aws_free_tier_only
+            and self.effective_rag_provider == "bedrock_kb"
+            and bool(self.bedrock_knowledge_base_id.strip())
+        )
+
+    @property
+    def bedrock_guardrail_enabled(self) -> bool:
+        return (
+            not self.aws_free_tier_only
+            and bool(self.bedrock_guardrail_id.strip())
+            and bool(self.bedrock_guardrail_version.strip())
+        )
 
 
 @lru_cache

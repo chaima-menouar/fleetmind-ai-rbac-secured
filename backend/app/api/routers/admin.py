@@ -46,10 +46,16 @@ def get_readiness(_: CurrentUser = Depends(require_admin)) -> dict[str, Any]:
     return {
         "environment": settings.environment,
         "demo_mode": settings.demo_mode,
-        "llm_provider": settings.llm_provider,
-        "rag_provider": settings.rag_provider,
+        "aws_free_tier_only": settings.aws_free_tier_only,
+        "cost_guard": (
+            "metered generative AI blocked"
+            if settings.aws_free_tier_only
+            else "standard cloud mode"
+        ),
+        "llm_provider": settings.effective_llm_provider,
+        "rag_provider": settings.effective_rag_provider,
         "retrieval_mode": retrieval_mode,
-        "guardrails": "configured" if guardrail_enabled() else "not configured",
+        "guardrails": "configured" if guardrail_enabled() else "not active",
         "grounding": "deterministic fleet analytics + approved retrieval context",
         "predictive_model_status": model_status,
         "predictive_model_version": model_version,

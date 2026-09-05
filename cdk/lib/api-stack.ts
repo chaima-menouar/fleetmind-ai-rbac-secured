@@ -15,6 +15,7 @@ interface ApiStackProps extends StackProps {
   authStack: AuthStack;
   dataStack: DataStack;
   production: boolean;
+  freeTierOnly: boolean;
 }
 
 export class ApiStack extends Stack {
@@ -25,7 +26,7 @@ export class ApiStack extends Stack {
 
     const apiLogGroup = new logs.LogGroup(this, "ApiLogGroup", {
       logGroupName: "/aws/lambda/fleetmind-api",
-      retention: logs.RetentionDays.ONE_MONTH,
+      retention: logs.RetentionDays.ONE_WEEK,
       removalPolicy: props.production ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
     });
 
@@ -36,13 +37,14 @@ export class ApiStack extends Stack {
         { file: "Dockerfile.lambda" },
       ),
       architecture: lambda.Architecture.X86_64,
-      memorySize: 1536,
+      memorySize: props.freeTierOnly ? 512 : 1536,
       timeout: Duration.seconds(30),
       logGroup: apiLogGroup,
       environment: {
         ENVIRONMENT: props.production ? "production" : "demo",
-        DEMO_MODE: props.production ? "false" : "true",
-        LLM_PROVIDER: props.production ? "bedrock" : "demo",
+        AWS_FREE_TIER_ONLY: props.freeTierOnly ? "true" : "false",
+        DEMO_MODE: props.freeTierOnly ? "true" : props.production ? "false" : "true",
+        LLM_PROVIDER: props.freeTierOnly ? "demo" : props.production ? "bedrock" : "demo",
         RAG_PROVIDER: "local",
         BEDROCK_KNOWLEDGE_BASE_ID: "",
         BEDROCK_GUARDRAIL_ID: "",
@@ -58,17 +60,20 @@ export class ApiStack extends Stack {
     props.dataStack.conversationsTable.grantReadWriteData(apiFunction);
     props.dataStack.botsTable.grantReadWriteData(apiFunction);
     props.dataStack.tasksTable.grantReadWriteData(apiFunction);
-    apiFunction.addToRolePolicy(
-      new iam.PolicyStatement({
-        actions: [
-          "bedrock:InvokeModel",
-          "bedrock:InvokeModelWithResponseStream",
-          "bedrock:Retrieve",
-          "bedrock:ApplyGuardrail",
-        ],
-        resources: ["*"],
-      }),
-    );
+
+    if (!props.freeTierOnly) {
+      apiFunction.addToRolePolicy(
+        new iam.PolicyStatement({
+          actions: [
+            "bedrock:InvokeModel",
+            "bedrock:InvokeModelWithResponseStream",
+            "bedrock:Retrieve",
+            "bedrock:ApplyGuardrail",
+          ],
+          resources: ["*"],
+        }),
+      );
+    }
 
     const integration = new HttpLambdaIntegration("FastApiIntegration", apiFunction);
     const authorizer = new HttpUserPoolAuthorizer(
@@ -96,10 +101,13 @@ export class ApiStack extends Stack {
         path: routePath,
         methods: [apigatewayv2.HttpMethod.ANY],
         integration,
-        authorizer: props.production ? authorizer : undefined,
+        authorizer: props.production && !props.freeTierOnly ? authorizer : undefined,
       });
     }
 
     new CfnOutput(this, "ApiUrl", { value: this.api.apiEndpoint });
+    new CfnOutput(this, "CostMode", {
+      value: props.freeTierOnly ? "free-tier-only" : "standard",
+    });
   }
 }
