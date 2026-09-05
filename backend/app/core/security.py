@@ -14,7 +14,7 @@ from fastapi import Depends, HTTPException, Request, status
 
 from app.core.config import settings
 from app.models.schemas import CurrentUser, UserRole
-from app.services.cognito_auth import CognitoAuthError, current_user as cognito_current_user
+from app.services import cognito_auth
 
 _DEMO_SIGNING_KEY = (settings.demo_auth_secret or secrets.token_urlsafe(48)).encode()
 
@@ -122,8 +122,8 @@ def get_current_user(request: Request) -> CurrentUser:
 
     if settings.cognito_enabled:
         try:
-            return cognito_current_user(token)
-        except CognitoAuthError as exc:
+            return cognito_auth.current_user(token)
+        except cognito_auth.CognitoAuthError as exc:
             raise _unauthorized(str(exc)) from exc
 
     claims = _claims_from_api_gateway(request)
