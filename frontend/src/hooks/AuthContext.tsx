@@ -1,5 +1,10 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { getCurrentUser, loginWithPassword, registerViewer } from "../api/auth";
+import {
+  confirmViewerRegistration,
+  getCurrentUser,
+  loginWithPassword,
+  startViewerRegistration,
+} from "../api/auth";
 import type { CurrentUser } from "../api/types";
 import { clearAccessToken, readAccessToken, saveAccessToken } from "../auth/session";
 
@@ -10,8 +15,8 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<CurrentUser>;
+  requestViewerCode: (name: string, email: string, password: string) => Promise<void>;
   createViewer: (
-    name: string,
     email: string,
     password: string,
     verificationCode: string,
@@ -52,13 +57,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session.user);
       return session.user;
     },
-    createViewer: async (name, email, password, verificationCode) => {
-      const session = await registerViewer(
+    requestViewerCode: async (name, email, password) => {
+      await startViewerRegistration(
         name.trim(),
         email.trim().toLowerCase(),
         password,
-        verificationCode,
       );
+    },
+    createViewer: async (email, password, verificationCode) => {
+      const normalizedEmail = email.trim().toLowerCase();
+      await confirmViewerRegistration(normalizedEmail, verificationCode);
+      const session = await loginWithPassword(normalizedEmail, password);
       saveAccessToken(session.access_token);
       setUser(session.user);
       return session.user;
