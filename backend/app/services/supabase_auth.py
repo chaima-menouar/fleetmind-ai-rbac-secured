@@ -1,11 +1,11 @@
 """Supabase Auth adapter for viewer email verification and sign-in."""
 
 import json
+import os
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-from app.core.config import settings
 from app.models.schemas import CurrentUser, UserRole
 
 
@@ -13,9 +13,13 @@ class SupabaseAuthError(ValueError):
     """Safe authentication error that may be returned to the API caller."""
 
 
+def enabled() -> bool:
+    return bool(os.getenv("SUPABASE_URL", "").strip() and os.getenv("SUPABASE_ANON_KEY", "").strip())
+
+
 def _require_enabled() -> tuple[str, str]:
-    url = settings.supabase_url.strip().rstrip("/")
-    key = settings.supabase_anon_key.strip()
+    url = os.getenv("SUPABASE_URL", "").strip().rstrip("/")
+    key = os.getenv("SUPABASE_ANON_KEY", "").strip()
     if not url or not key:
         raise SupabaseAuthError("Email verification is not configured yet.")
     return url, key
@@ -23,10 +27,7 @@ def _require_enabled() -> tuple[str, str]:
 
 def _request(path: str, *, method: str = "POST", payload: dict | None = None, token: str | None = None) -> dict:
     base_url, key = _require_enabled()
-    headers = {
-        "apikey": key,
-        "Content-Type": "application/json",
-    }
+    headers = {"apikey": key, "Content-Type": "application/json"}
     if token:
         headers["Authorization"] = f"Bearer {token}"
     data = None if payload is None else json.dumps(payload).encode()
