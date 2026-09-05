@@ -8,6 +8,7 @@ from app.core.config import settings
 from app.core.security import require_admin
 from app.ml.predictor import get_model_card
 from app.models.schemas import CurrentUser, UsageStatsResponse
+from app.services.bedrock_safety import guardrail_enabled
 from app.services.store import store
 
 router = APIRouter()
@@ -37,10 +38,18 @@ def get_readiness(_: CurrentUser = Depends(require_admin)) -> dict[str, Any]:
             settings.tasks_table,
         )
     )
+    retrieval_mode = (
+        "bedrock knowledge base"
+        if settings.bedrock_kb_enabled
+        else "local approved corpus"
+    )
     return {
         "environment": settings.environment,
         "demo_mode": settings.demo_mode,
         "llm_provider": settings.llm_provider,
+        "rag_provider": settings.rag_provider,
+        "retrieval_mode": retrieval_mode,
+        "guardrails": "configured" if guardrail_enabled() else "not configured",
         "grounding": "deterministic fleet analytics + approved retrieval context",
         "predictive_model_status": model_status,
         "predictive_model_version": model_version,
