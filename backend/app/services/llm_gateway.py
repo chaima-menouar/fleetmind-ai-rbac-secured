@@ -1,4 +1,4 @@
-"""LLM gateway with a credential-free demo provider and Amazon Bedrock."""
+"""LLM gateway with a credential-free demo provider and optional Amazon Bedrock."""
 
 from enum import Enum
 from typing import Any
@@ -149,10 +149,11 @@ def _demo_completion(
             "approved knowledge sources."
         )
 
-    if context:
-        evidence = f"\n\nGrounding: {len(context)} approved knowledge source(s) matched."
-    else:
-        evidence = "\n\nGrounding: verified fleet telemetry only."
+    evidence = (
+        f"\n\nGrounding: {len(context)} approved knowledge source(s) matched."
+        if context
+        else "\n\nGrounding: verified fleet telemetry only."
+    )
     return (
         f"FleetMind analysis:\n{guidance}{evidence}\n\n"
         "Demo environment: fleet records are fictional portfolio data."
@@ -168,7 +169,12 @@ def complete(
     provider: LLMProvider | None = None,
     **_: Any,
 ) -> str:
-    selected = provider or LLMProvider(settings.llm_provider)
+    # Cost guard: free-tier-only mode must never call a metered Bedrock model.
+    selected = (
+        LLMProvider.DEMO
+        if settings.aws_free_tier_only
+        else (provider or LLMProvider(settings.effective_llm_provider))
+    )
     context = context or []
     fleet = fleet or []
     if selected is LLMProvider.DEMO:
