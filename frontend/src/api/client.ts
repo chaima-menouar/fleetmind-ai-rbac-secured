@@ -1,6 +1,7 @@
 import { clearAccessToken, readAccessToken } from "../auth/session";
 
-const BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+const CONFIGURED_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+const API_BASE_URL = import.meta.env.DEV ? CONFIGURED_BASE_URL : "";
 
 export class ApiError extends Error {
   constructor(
@@ -11,6 +12,10 @@ export class ApiError extends Error {
   }
 }
 
+async function fetchApi(path: string, options: RequestInit): Promise<Response> {
+  return fetch(`${API_BASE_URL}${path}`, options);
+}
+
 export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), 20_000);
@@ -19,11 +24,13 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
     const headers = new Headers(options?.headers);
     if (!headers.has("Accept")) headers.set("Accept", "application/json");
     if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
-    const response = await fetch(`${BASE_URL}${path}`, {
+
+    const response = await fetchApi(path, {
       ...options,
       signal: controller.signal,
       headers,
     });
+
     if (!response.ok) {
       if (response.status === 401 && !path.startsWith("/api/auth/")) {
         clearAccessToken();
