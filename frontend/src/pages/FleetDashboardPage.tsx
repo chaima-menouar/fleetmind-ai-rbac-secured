@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getFleetSummary, runMaintenanceTriage } from "../api/fleet";
-import type { AgentTask, FleetSummary } from "../api/types";
+import { getFleetIntelligence, getFleetSummary, runMaintenanceTriage } from "../api/fleet";
+import type { AgentTask, FleetIntelligence, FleetSummary } from "../api/types";
 import StatCard from "../components/StatCard";
 import Icon from "../components/Icon";
 import { useAuth } from "../hooks/AuthContext";
@@ -10,13 +10,17 @@ export default function FleetDashboardPage() {
   const { user } = useAuth();
   const canRunTriage = user?.role !== "viewer";
   const [fleet, setFleet] = useState<FleetSummary>();
+  const [intelligence, setIntelligence] = useState<FleetIntelligence>();
   const [task, setTask] = useState<AgentTask>();
   const [runningVehicle, setRunningVehicle] = useState<string>();
   const [error, setError] = useState<string>();
 
   useEffect(() => {
-    getFleetSummary()
-      .then(setFleet)
+    Promise.all([getFleetSummary(), getFleetIntelligence()])
+      .then(([summary, grounded]) => {
+        setFleet(summary);
+        setIntelligence(grounded);
+      })
       .catch((caught) => setError(caught instanceof Error ? caught.message : "Could not load fleet."));
   }, []);
 
@@ -40,26 +44,75 @@ export default function FleetDashboardPage() {
         <div>
           <span className="eyebrow">FLEET COMMAND</span>
           <h1>See risk before it <span>becomes downtime.</span></h1>
-          <p>Demo telemetry from five vehicles with one-click maintenance triage.</p>
+          <p>Verified analytics first, AI explanation second — with role-aware operational controls.</p>
         </div>
-        <span className="last-updated">● Demo data · updated now</span>
+        <span className="last-updated">● Grounded demo telemetry · updated now</span>
       </div>
       {error && <div className="inline-error">{error}</div>}
       {fleet && (
         <>
           <section className="data-boundary-banner">
             <div>
-              <strong>This page uses fictional fleet data and deterministic triage rules.</strong>
-              <span>The separately evaluated Scania APS classifier is available in Predictive ML.</span>
+              <strong>Fleet facts are computed before they reach the assistant.</strong>
+              <span>Risk scores and KPIs below come from deterministic analytics, not LLM guesses.</span>
             </div>
-            <Link to="/predictive-maintenance">View real model evidence →</Link>
+            <Link to="/assistant">Ask my assistant →</Link>
           </section>
+
           <div className="stat-grid">
             <StatCard label="Total vehicles" value={fleet.total_vehicles} detail="Across 5 Moroccan cities" />
             <StatCard label="Active now" value={fleet.active_vehicles} detail="Ready for operations" tone="green" />
             <StatCard label="Service due" value={fleet.maintenance_due} detail="Within the next 7 days" tone="amber" />
             <StatCard label="Average health" value={`${fleet.average_health}%`} detail="Fleet-wide health score" tone="violet" />
           </div>
+
+          {intelligence && (
+            <section className="table-card">
+              <div className="section-heading">
+                <div>
+                  <h2>Grounded intelligence</h2>
+                  <p>Deterministic signals used to constrain manager, technician, and viewer assistants.</p>
+                </div>
+                <span className="demo-badge">NO LLM CALCULATION</span>
+              </div>
+              <div className="stat-grid">
+                {intelligence.kpis.slice(0, 4).map((kpi, index) => (
+                  <StatCard
+                    key={kpi.label}
+                    label={kpi.label}
+                    value={kpi.value}
+                    detail={kpi.detail}
+                    tone={index === 0 ? "green" : index === 3 ? "amber" : "violet"}
+                  />
+                ))}
+              </div>
+              <div className="section-heading">
+                <div>
+                  <h2>Operational risk ranking</h2>
+                  <p>Composite score from status, health, battery, and service urgency.</p>
+                </div>
+                <span className="section-count">{intelligence.critical_vehicle_ids.length} critical</span>
+              </div>
+              <div className="table-scroll">
+                <table>
+                  <thead><tr><th>Rank</th><th>Vehicle</th><th>Risk</th><th>Health</th><th>Battery</th><th>Service</th><th>Location</th></tr></thead>
+                  <tbody>
+                    {intelligence.risk_ranking.slice(0, 5).map((risk, index) => (
+                      <tr key={risk.vehicle_id}>
+                        <td><strong>#{index + 1}</strong></td>
+                        <td><strong>{risk.vehicle_id}</strong><small>{risk.model}</small></td>
+                        <td><strong>{risk.risk_score}</strong><small>{risk.risk_score >= 60 ? "Critical" : risk.risk_score >= 30 ? "Watch" : "Stable"}</small></td>
+                        <td>{risk.health_score}%</td>
+                        <td>{risk.battery_percent}%</td>
+                        <td>{risk.next_service_days === 0 ? "Due now" : `${risk.next_service_days} days`}</td>
+                        <td>{risk.location}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
 
           {task && (
             <section className="agent-result">
@@ -96,6 +149,14 @@ export default function FleetDashboardPage() {
                 </tbody>
               </table>
             </div>
+          </section>
+
+          <section className="data-boundary-banner">
+            <div>
+              <strong>Predictive ML remains separately evaluated.</strong>
+              <span>The Scania APS classifier is not used to fabricate this fictional fleet telemetry.</span>
+            </div>
+            <Link to="/predictive-maintenance">View model evidence →</Link>
           </section>
         </>
       )}
