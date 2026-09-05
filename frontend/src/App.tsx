@@ -20,9 +20,9 @@ export default function App() {
           <Route element={<AppShell />}>
             <Route path="/" element={<HomePage />} />
             <Route path="/fleet" element={<FleetDashboardPage />} />
+            <Route path="/assistant" element={<ChatPage />} />
             <Route path="/access-denied" element={<AccessDeniedPage />} />
             <Route element={<ProtectedRoute allowedRoles={["admin", "technician"]} />}>
-              <Route path="/assistant" element={<ChatPage />} />
               <Route path="/predictive-maintenance" element={<PredictiveMaintenancePage />} />
               <Route path="/marketplace" element={<MarketplacePage />} />
             </Route>
