@@ -5,7 +5,7 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.core.authorization import ensure_bot_access
-from app.core.security import require_operator
+from app.core.security import require_chat_user
 from app.models.schemas import (
     ChatHistoryResponse,
     ChatMessageRequest,
@@ -23,7 +23,7 @@ router = APIRouter()
 @router.post("/message", response_model=ChatMessageResponse)
 def send_message(
     payload: ChatMessageRequest,
-    user: CurrentUser = Depends(require_operator),
+    user: CurrentUser = Depends(require_chat_user),
 ) -> ChatMessageResponse:
     bot = store.get_bot(payload.bot_id)
     if bot is None:
@@ -69,7 +69,7 @@ def send_message(
 @router.get("/history/{conversation_id}", response_model=ChatHistoryResponse)
 def get_history(
     conversation_id: str,
-    user: CurrentUser = Depends(require_operator),
+    user: CurrentUser = Depends(require_chat_user),
 ) -> ChatHistoryResponse:
     try:
         messages = store.get_history(conversation_id, user.id)
