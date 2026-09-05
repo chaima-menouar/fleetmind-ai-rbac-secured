@@ -1,48 +1,65 @@
 # FleetMind AI
 
-FleetMind AI is a functional enterprise fleet-operations MVP. It combines
-department-specific AI assistants, lightweight retrieval, fleet health data,
-an auditable maintenance agent, and a reproducible predictive-maintenance model
-in one responsive workspace.
+FleetMind AI is a role-aware AI and cloud fleet-operations platform built as a portfolio-grade engineering project. It combines deterministic fleet analytics, grounded AI assistants, predictive maintenance ML, secure role-based access, and an AWS deployment path in one responsive workspace.
 
-The repository runs without cloud credentials in **demo mode**. Amazon Bedrock
-and AWS infrastructure are optional deployment paths, not requirements for the
-local demo.
+The project is deliberately explicit about data boundaries: fictional fleet telemetry is never presented as real vehicle data, while the predictive-maintenance classifier is trained and evaluated separately on the official Scania APS dataset.
 
-## What works
+## Why FleetMind is different
 
-| Capability | MVP implementation |
+FleetMind does not ask an LLM to invent operational KPIs. The response path is:
+
+**fleet data → deterministic analytics → retrieved knowledge → role policy → LLM explanation**
+
+This keeps vehicle facts, risk scores, and service urgency grounded before a generative model is allowed to explain or prioritize them.
+
+## Core capabilities
+
+| Capability | Implementation |
 | --- | --- |
-| AI workspace | Multi-assistant chat with conversation history and cited knowledge sources |
-| Modern interface | Responsive glass UI, gradient identity, custom SVG icons, and accessible motion |
-| Assistant marketplace | Three seeded assistants plus creation of new assistants |
-| RAG foundation | Safe UTF-8 text ingestion, chunking, and local keyword retrieval |
-| Fleet command | Health, battery, service urgency, and status for demo vehicles |
-| Maintenance agent | Telemetry lookup, risk decision, and mock ticket creation |
-| Predictive ML | Trained Scania APS classifier, held-out metrics, model card, and live sample inference |
-| Role security | Signed demo sessions plus server-enforced manager, technician, and viewer permissions |
-| Governance | Manager-only usage analytics, upload limits, restricted CORS, and demo-data boundary |
-| Cloud infrastructure | Cognito, DynamoDB, Lambda container, HTTP API, S3, and CloudFront |
+| Grounded fleet intelligence | Deterministic KPI and composite risk scoring before the LLM layer |
+| Role-scoped AI | Manager, technician, and viewer assistants with server-enforced access |
+| RAG foundation | Validated text ingestion, chunking, retrieval, and cited knowledge context |
+| Fleet command | Health, battery, location, service urgency, and ranked operational risk |
+| Maintenance agent | Telemetry lookup, deterministic triage, and auditable mock ticket creation |
+| Predictive ML | Reproducible Scania APS classifier with held-out metrics and live sample inference |
+| Authentication | Signed demo sessions plus Cognito viewer email-verification integration |
+| RBAC security | Manager, technician, and viewer permissions enforced at API boundaries |
+| Governance | Manager-only usage analytics, upload restrictions, CORS controls, and data-boundary notices |
+| Cloud path | Amazon Cognito, Bedrock integration, DynamoDB, Lambda, API Gateway, S3, CloudFront, and CDK |
+| CI | Backend lint/type/tests, frontend build, and infrastructure validation in GitHub Actions |
 
 ## Architecture
 
 ~~~mermaid
 flowchart LR
-    Web["React workspace"] --> API["FastAPI service"]
-    API --> AI["LLM + RAG layer"]
-    API --> Data["Fleet and app data"]
-    API --> ML["Trained APS classifier"]
-    AI --> Bedrock["Amazon Bedrock"]
+    Web["React + TypeScript workspace"] --> API["FastAPI service"]
+    API --> Auth["RBAC + Cognito"]
+    API --> Analytics["Deterministic fleet analytics"]
+    Analytics --> Agent["Role policy + agent orchestration"]
+    Agent --> RAG["Retrieved approved knowledge"]
+    RAG --> LLM["Demo gateway / Amazon Bedrock"]
+    API --> ML["Scania APS classifier"]
+    API --> Data["Demo store / DynamoDB path"]
 ~~~
 
-- **Local mode:** deterministic AI responses and in-memory sample data.
-- **AWS demo mode:** the same API runs as a Lambda container behind API Gateway.
-- **Production boundary:** Cognito can protect the API, while DynamoDB tables are
-  provisioned for persistent adapters.
+### AI grounding path
 
-See [Architecture](docs/ARCHITECTURE.md) for the detailed decisions,
-[APS model card](docs/MODEL_CARD.md) for evaluation evidence, and
-[Development plan](docs/PLAN.md) for the next milestones.
+1. The backend reads authenticated fleet data.
+2. FleetMind computes KPIs and composite risk scores deterministically.
+3. The current role selects exactly one approved assistant scope.
+4. Retrieved knowledge and verified fleet analytics are injected into the model context.
+5. The LLM explains evidence; it does not calculate or fabricate telemetry.
+6. Operational actions remain protected by RBAC even if the UI is bypassed.
+
+## Role model
+
+| Role | Assistant | Main access |
+| --- | --- | --- |
+| Fleet manager | Manager Intelligence | Fleet KPIs, operational priorities, governance, assistant management |
+| Technician | Technician Assistant | Maintenance diagnostics, triage, predictive ML, approved technical knowledge |
+| Viewer | Viewer Assistant | Read-only fleet status and explanations; no operational writes |
+
+Self-registered Cognito users are treated as viewers. Public signup is not allowed to write privileged role or department attributes.
 
 ## Quick start with Docker
 
@@ -58,171 +75,116 @@ Open:
 - API documentation: <http://localhost:8000/docs>
 - Health check: <http://localhost:8000/health>
 
-Local test accounts:
+Demo accounts:
 
-| Role | Email | Password | Access |
-| --- | --- | --- | --- |
-| Fleet manager | manager@fleetmind.demo | FleetMind2026! | Full workspace, assistant management, and governance |
-| Technician | technician@fleetmind.demo | Service2026! | Fleet operations, maintenance AI, and approved technical assistants |
-| Viewer | viewer@fleetmind.demo | View2026! | Read-only overview and vehicle status |
+| Role | Email | Password |
+| --- | --- | --- |
+| Fleet manager | manager@fleetmind.demo | FleetMind2026! |
+| Technician | technician@fleetmind.demo | Service2026! |
+| Viewer | viewer@fleetmind.demo | View2026! |
 
-These credentials contain fictional demo data only. Override them through the
-backend environment before sharing a deployed demonstration.
+These credentials and the fleet records are fictional demonstration data only.
 
-Stop the project with Ctrl+C, then:
+## Main product workflows
 
-~~~bash
-docker compose down
-~~~
-
-## Manual local setup
-
-Prerequisites:
-
-- Python 3.12 and Poetry
-- Node.js 24 and npm
-
-Backend:
-
-~~~bash
-cd backend
-cp .env.example .env
-poetry install
-poetry run uvicorn app.main:app --reload
-~~~
-
-Frontend, in a second terminal:
-
-~~~bash
-cd frontend
-cp .env.example .env
-npm install
-npm run dev
-~~~
-
-The Vite development server proxies /api to the backend. The explicit
-VITE_API_BASE_URL value is useful when the services run on different hosts.
-
-## Try the main workflows
-
-1. Open **AI Workspace** and ask the technician assistant about a battery alert.
-2. Open **Fleet overview** and run triage for vehicle FM-4410.
-3. Open **Predictive ML**, inspect held-out metrics, and score an official test sample.
-4. Open **AI marketplace** to compare the seeded assistants.
-5. Open **Build an assistant** and create a new department copilot.
-6. Open **Usage & admin** to see session activity.
-
-The navigation and dashboard change with the signed-in role. Hiding a menu item
-is not the security boundary: protected API endpoints independently return 403
-when the role is not allowed.
-
-Displayed people, fleet vehicles, dashboard telemetry, and tickets are fictional
-demo data. Predictive ML is separate: it runs a real trained model against
-examples taken from the official held-out Scania APS test split.
+1. Sign in with a role-scoped account.
+2. Open **Fleet Command** to inspect grounded KPIs and operational risk ranking.
+3. Ask **My Assistant** a natural-language question; only the assistant allowed for the current role is exposed.
+4. As manager or technician, run maintenance triage for an approved vehicle.
+5. Open **Predictive ML** to inspect the Scania APS model card, held-out metrics, threshold, limitations, and live sample inference.
+6. As manager, inspect governance and usage analytics.
 
 ## Predictive-maintenance model
 
-The bundled model is a calibrated histogram gradient boosting classifier trained
-from the official UCI **APS Failure at Scania Trucks** dataset. Its 16,000-row
-held-out evaluation achieved 93.07% recall, 53.94% precision, and a 91.48%
-reduction in the dataset's asymmetric error cost versus an all-negative baseline.
+The bundled model is a calibrated histogram gradient boosting classifier trained from the official UCI **APS Failure at Scania Trucks** dataset.
 
-The model uses 170 anonymized features and predicts APS-related failure only. It
-does not score the fictional vehicles on the Fleet overview page and must not be
-used for safety decisions. Full methodology and limitations are in the
-[model card](docs/MODEL_CARD.md).
+Held-out evaluation on 16,000 rows reports approximately:
+
+- recall: 93.07%
+- precision: 53.94%
+- asymmetric cost reduction: 91.48% versus an all-negative baseline
+
+The model uses 170 anonymized features and predicts APS-related failure only. It does **not** score the fictional vehicles displayed in Fleet Command, and it is not validated for safety-critical production decisions.
+
+See `docs/MODEL_CARD.md` for methodology and limitations.
+
+## Amazon Cognito
+
+The backend supports real viewer signup and email verification through Amazon Cognito while keeping manager and technician demo accounts available when `DEMO_MODE=true`.
+
+Expected deployment variables:
+
+~~~env
+AWS_REGION=eu-north-1
+COGNITO_CLIENT_ID=<app-client-id>
+COGNITO_CLIENT_SECRET=<app-client-secret-if-configured>
+DEMO_MODE=true
+DEMO_AUTH_SECRET=<strong-random-secret>
+~~~
+
+Cognito requirements:
+
+- self-registration enabled;
+- email verification enabled;
+- username/password authentication enabled;
+- email and name writable;
+- public app clients must not be allowed to write privileged role or department attributes.
+
+Do not commit Cognito secrets or AWS credentials.
 
 ## Amazon Bedrock
 
-The default provider is deterministic and credential-free:
+FleetMind can use a deterministic credential-free demo gateway or Amazon Bedrock.
+
+Demo:
 
 ~~~env
-DEMO_MODE=true
 LLM_PROVIDER=demo
 ~~~
 
-To use Bedrock locally, configure an AWS identity with permission to invoke the
-selected model, then change:
+Bedrock:
 
 ~~~env
-DEMO_MODE=true
 LLM_PROVIDER=bedrock
-AWS_REGION=us-east-1
+AWS_REGION=<supported-region>
 BEDROCK_MODEL_ID=amazon.nova-lite-v1:0
 ~~~
 
-Do not commit AWS keys. The SDK uses the normal AWS credential chain.
-
-## AWS CDK
-
-The CDK application creates:
-
-- a Cognito user pool and web client;
-- DynamoDB tables for conversations, assistants, and agent tasks;
-- a container-image Lambda and HTTP API;
-- a private S3 web bucket and CloudFront distribution;
-- a CloudFront /api/* route to avoid cross-origin calls.
-
-Build the web asset before synthesizing:
-
-~~~bash
-cd frontend
-npm ci
-npm run build
-
-cd ../cdk
-npm ci
-npm run build
-npm run synth
-~~~
-
-After aws configure and cdk bootstrap, deploy the credential-free AWS demo:
-
-~~~bash
-npm run deploy
-~~~
-
-The production=true context enables the Cognito authorizer and Bedrock. Do not
-enable it until a Cognito login flow is added to the frontend:
-
-~~~bash
-npx cdk deploy --all -c production=true
-~~~
-
-AWS resources can generate charges. Review cdk diff before every deployment
-and destroy demo stacks when they are no longer needed.
+When Bedrock is enabled, FleetMind injects verified fleet analytics and retrieved knowledge into the prompt before generation. AWS credentials use the normal SDK credential chain and must never be committed.
 
 ## API surface
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| GET | /health | Service status |
-| POST | /api/auth/login | Create a signed local demo session |
-| POST | /api/auth/register-viewer | Create a read-only local viewer |
-| GET | /api/auth/me | Current demo/Cognito user |
-| POST | /api/chat/message | Send a message through RAG and the LLM gateway |
-| GET | /api/chat/history/{id} | Read a conversation |
-| GET/POST | /api/bots | List or create assistants |
-| POST | /api/bots/{id}/knowledge | Add a validated text source |
-| GET | /api/fleet/summary | Fleet health overview |
-| POST | /api/agents/run | Run maintenance triage |
-| GET | /api/admin/usage | Workspace usage summary |
-| GET | /api/ml/model-card | Read dataset, training, metrics, and limits |
-| GET | /api/ml/samples | List bundled held-out examples |
-| POST | /api/ml/predict | Score a bundled example with the trained model |
-
-Request examples are documented in [API guide](docs/API.md).
+| GET | `/health` | Service status |
+| POST | `/api/auth/login` | Demo/Cognito sign-in |
+| POST | `/api/auth/register-viewer/start` | Start Cognito viewer signup and email verification |
+| POST | `/api/auth/register-viewer/confirm` | Confirm viewer verification code |
+| GET | `/api/auth/me` | Current authenticated user |
+| GET | `/api/fleet/summary` | Fleet health overview |
+| GET | `/api/fleet/intelligence` | Deterministic KPIs and operational risk ranking |
+| POST | `/api/chat/message` | Role-scoped grounded assistant message |
+| GET | `/api/chat/history/{id}` | Read owned conversation history |
+| GET | `/api/bots` | List assistants allowed for current role |
+| POST | `/api/bots` | Manager-only assistant creation |
+| POST | `/api/bots/{id}/knowledge` | Manager-only validated knowledge upload |
+| POST | `/api/agents/run` | Manager/technician maintenance triage |
+| GET | `/api/admin/usage` | Manager-only workspace usage |
+| GET | `/api/ml/model-card` | Model dataset, training, metrics, and limitations |
+| GET | `/api/ml/samples` | Operator-only held-out sample list |
+| POST | `/api/ml/predict` | Operator-only APS sample inference |
 
 ## Repository layout
 
 ~~~text
-fleetmind-ai/
-├── backend/             FastAPI, RAG, agent, trained model, and tests
-├── frontend/            React + TypeScript workspace
+fleetmind-ai-rbac-secured/
+├── backend/             FastAPI, auth, RBAC, analytics, RAG, agents, ML, tests
+├── frontend/            React + TypeScript role-aware workspace
 ├── cdk/                 AWS infrastructure as code
-├── examples/            Importable bot configs and sample knowledge
-├── docs/                Architecture, API guide, and roadmap
-├── compose.yaml         One-command local demo
+├── examples/            Assistant configs and sample knowledge
+├── docs/                Architecture, API guide, model card, roadmap
+├── compose.yaml         Local multi-service demo
+├── vercel.json          Vercel services routing
 └── .github/workflows/   Backend, frontend, and infrastructure CI
 ~~~
 
@@ -242,18 +204,18 @@ npm run build
 npm run synth
 ~~~
 
-CI runs the same checks without ignoring failures.
+CI runs these checks without ignoring failures.
 
-## Current scope
+## Current scope and production boundary
 
-This is a portfolio MVP, not a production fleet-control system. Local viewer
-accounts, data, and conversations reset when the backend restarts. The trained
-model is evaluated honestly on historical data but is not validated for a live
-fleet. DynamoDB adapters, vector search, Cognito UI, streaming chat, and real
-telemetry/CRM integrations remain planned work.
+FleetMind is a portfolio engineering platform, not a production fleet-control system. The current fleet telemetry and people are fictional. Demo state is in-memory. Cognito viewer authentication, AWS infrastructure, DynamoDB adapters, Bedrock, and other cloud components are designed as deployable integration paths, but a real fleet would still require validated telemetry ingestion, persistent production adapters, observability, secrets management, load testing, domain validation, and safety review.
+
+The project intentionally separates three concerns:
+
+- **deterministic operational analytics** for verifiable fleet facts;
+- **machine learning** for the independently evaluated Scania APS failure task;
+- **generative AI** for role-scoped explanation and decision support.
 
 ## Author
 
 Developed and maintained by **Chaima Menouar**.
-#   f l e e t m i n d - a i - r b a c - s e c u r e d  
- 
