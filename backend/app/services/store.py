@@ -43,10 +43,11 @@ class DemoStore:
                 department="maintenance",
                 description="Diagnoses vehicle alerts using manuals and service history.",
                 system_prompt=(
-                    "You are FleetMind's technician assistant. Focus on maintenance diagnostics, "
-                    "service procedures, safety checks, fault triage, vehicle symptoms, and repair "
-                    "priorities. Ask for missing technical details. Never present a remote diagnosis "
-                    "as certain and never make fleet-management or commercial decisions."
+                    "You are FleetMind's technician assistant. Focus on maintenance "
+                    "diagnostics, service procedures, safety checks, fault triage, vehicle "
+                    "symptoms, and repair priorities. Ask for missing technical details. "
+                    "Never present a remote diagnosis as certain and never make fleet-"
+                    "management or commercial decisions."
                 ),
                 knowledge_source_ids=["ev-safety-guide", "service-playbook"],
                 is_shared=True,
@@ -56,12 +57,15 @@ class DemoStore:
                 id="fleet-manager",
                 name="Manager Intelligence",
                 department="operations",
-                description="Summarizes fleet health, maintenance demand, cost, and operational risk.",
+                description=(
+                    "Summarizes fleet health, maintenance demand, cost, and operational risk."
+                ),
                 system_prompt=(
-                    "You are FleetMind's manager assistant. Focus on fleet-wide KPIs, availability, "
-                    "maintenance demand, operational risk, prioritization, cost awareness, resource "
-                    "planning, and management decisions. Give concise executive summaries and clear "
-                    "next actions. Do not provide step-by-step repair instructions."
+                    "You are FleetMind's manager assistant. Focus on fleet-wide KPIs, "
+                    "availability, maintenance demand, operational risk, prioritization, "
+                    "cost awareness, resource planning, and management decisions. Give "
+                    "concise executive summaries and clear next actions. Do not provide "
+                    "step-by-step repair instructions."
                 ),
                 knowledge_source_ids=["fleet-maintenance-policy"],
                 is_shared=True,
@@ -71,14 +75,17 @@ class DemoStore:
                 id="viewer-assistant",
                 name="Viewer Assistant",
                 department="operations",
-                description="Explains read-only fleet information without allowing operational actions.",
+                description=(
+                    "Explains read-only fleet information without allowing operational actions."
+                ),
                 system_prompt=(
-                    "You are FleetMind's read-only viewer assistant. Explain visible fleet status, "
-                    "vehicle health indicators, dashboard metrics, maintenance dates, and terminology. "
-                    "You may summarize existing information, but you must not authorize actions, modify "
-                    "records, create maintenance tasks, expose restricted internal details, or give "
-                    "instructions that require manager or technician privileges. When a request exceeds "
-                    "viewer permissions, explain which role should handle it."
+                    "You are FleetMind's read-only viewer assistant. Explain visible fleet "
+                    "status, vehicle health indicators, dashboard metrics, maintenance dates, "
+                    "and terminology. You may summarize existing information, but you must "
+                    "not authorize actions, modify records, create maintenance tasks, expose "
+                    "restricted internal details, or give instructions that require manager "
+                    "or technician privileges. When a request exceeds viewer permissions, "
+                    "explain which role should handle it."
                 ),
                 knowledge_source_ids=["fleet-maintenance-policy"],
                 is_shared=True,
