@@ -1,6 +1,7 @@
 import { clearAccessToken, readAccessToken } from "../auth/session";
 
 const CONFIGURED_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+const API_BASE_URL = import.meta.env.DEV ? CONFIGURED_BASE_URL : "";
 
 export class ApiError extends Error {
   constructor(
@@ -12,14 +13,7 @@ export class ApiError extends Error {
 }
 
 async function fetchApi(path: string, options: RequestInit): Promise<Response> {
-  if (!CONFIGURED_BASE_URL) return fetch(path, options);
-
-  try {
-    return await fetch(`${CONFIGURED_BASE_URL}${path}`, options);
-  } catch (error) {
-    if (error instanceof DOMException && error.name === "AbortError") throw error;
-    return fetch(path, options);
-  }
+  return fetch(`${API_BASE_URL}${path}`, options);
 }
 
 export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
