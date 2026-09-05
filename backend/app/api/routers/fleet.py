@@ -34,7 +34,10 @@ def fleet_summary(_: CurrentUser = Depends(get_current_user)) -> FleetSummaryRes
 @router.get("/intelligence", response_model=FleetIntelligenceResponse)
 def fleet_intelligence(_: CurrentUser = Depends(get_current_user)) -> FleetIntelligenceResponse:
     vehicles = store.vehicles()
-    kpis = [FleetKpiResponse(label=item.label, value=item.value, detail=item.detail) for item in fleet_kpis(vehicles)]
+    kpis = [
+        FleetKpiResponse(label=item.label, value=item.value, detail=item.detail)
+        for item in fleet_kpis(vehicles)
+    ]
     ranked = ranked_risks(vehicles)
     risks = [
         FleetRiskResponse(
