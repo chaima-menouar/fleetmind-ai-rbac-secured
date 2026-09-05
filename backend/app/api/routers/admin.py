@@ -37,10 +37,17 @@ def get_readiness(_: CurrentUser = Depends(require_admin)) -> dict[str, Any]:
             settings.tasks_table,
         )
     )
+    retrieval_mode = (
+        "bedrock knowledge base"
+        if settings.bedrock_kb_enabled
+        else "local approved corpus"
+    )
     return {
         "environment": settings.environment,
         "demo_mode": settings.demo_mode,
         "llm_provider": settings.llm_provider,
+        "rag_provider": settings.rag_provider,
+        "retrieval_mode": retrieval_mode,
         "grounding": "deterministic fleet analytics + approved retrieval context",
         "predictive_model_status": model_status,
         "predictive_model_version": model_version,
