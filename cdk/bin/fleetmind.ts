@@ -7,6 +7,7 @@ import { AuthStack } from "../lib/auth-stack";
 
 const app = new App();
 const production = app.node.tryGetContext("production") === "true";
+const freeTierOnly = app.node.tryGetContext("freeTierOnly") !== "false";
 const env = {
   account: process.env.CDK_DEFAULT_ACCOUNT,
   region: process.env.CDK_DEFAULT_REGION ?? "us-east-1",
@@ -19,6 +20,7 @@ const api = new ApiStack(app, "FleetMindApiStack", {
   authStack: auth,
   dataStack: data,
   production,
+  freeTierOnly,
 });
 new FrontendStack(app, "FleetMindFrontendStack", {
   env,
@@ -28,3 +30,4 @@ new FrontendStack(app, "FleetMindFrontendStack", {
 
 Tags.of(app).add("Project", "FleetMindAI");
 Tags.of(app).add("Environment", production ? "production" : "demo");
+Tags.of(app).add("CostMode", freeTierOnly ? "free-tier-only" : "standard");
