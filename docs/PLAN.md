@@ -6,20 +6,19 @@
 - [x] Responsive React workspace with routing
 - [x] Credential-free deterministic demo mode
 - [x] Amazon Bedrock Converse gateway
-- [x] Cognito, DynamoDB, Lambda, HTTP API, S3, and CloudFront CDK stacks
+- [x] AWS CDK path for Cognito, DynamoDB, Lambda, HTTP API, S3, and CloudFront
 - [x] Docker Compose local workflow
 - [x] Backend, frontend, and CDK continuous integration
 
-## Phase 1 — Functional MVP complete
+## Phase 1 — Functional product complete
 
 - [x] Multi-assistant chat endpoint and interface
 - [x] In-memory conversation history
-- [x] Seeded fleet and department assistants
+- [x] Seeded role assistants
 - [x] Fleet health dashboard
 - [x] Maintenance triage agent with auditable steps
 - [x] Usage and governance dashboard
-- [x] Assistant builder
-- [x] Validated text knowledge upload API
+- [x] Assistant builder and validated knowledge upload
 - [x] Signed local sessions with server-enforced manager, technician, and viewer roles
 - [x] Role-aware dashboards, navigation, protected routes, and resource access
 - [x] Owner-scoped conversation history and maintenance task access
@@ -32,46 +31,62 @@
 - [x] Publish precision, recall, ranking metrics, confusion matrix, and model limits
 - [x] Run server-side inference against reproducible held-out examples
 - [x] Keep fictional fleet triage visually separate from evaluated ML
+- [x] Explain score, decision threshold, threshold distance, confirmed outcome, and action scope
+- [x] Avoid invented physical feature meanings because the APS inputs are anonymized
 
-## Next domain milestone
+## Grounded AI milestone complete
 
-- [ ] Compare multiple predictive-maintenance algorithms on identical, leakage-safe splits
-- [ ] Select the final model using failure cost, recall, precision, and calibration evidence
-- [ ] Add feature-level explanations and map every prediction to a vehicle and recommendation
-- [ ] Define the approved fleet knowledge corpus, metadata, ownership, and update process
-- [ ] Replace lexical retrieval with Amazon Bedrock Knowledge Bases and role-aware metadata filters
-- [ ] Feed authorized vehicle and predictive-maintenance results into grounded assistant responses
+- [x] Compute fleet KPIs before LLM generation
+- [x] Add deterministic composite operational-risk ranking
+- [x] Publish authenticated `/api/fleet/intelligence` evidence
+- [x] Inject verified fleet analytics into demo and Bedrock assistant context
+- [x] Add anti-hallucination instructions for telemetry, service dates, and fleet facts
+- [x] Give manager, technician, and viewer different assistant scopes
+- [x] Allow viewer explanations while blocking viewer operational actions server-side
+- [x] Replace hard-coded home metrics with backend-derived fleet signals
+- [x] Surface grounded analytics and risk ranking in Fleet Command
+- [x] Support direct vehicle-ID questions with verified vehicle facts
+- [x] Add unit and API tests for risk ranking and intelligence access
 
-## Phase 2 — Persistent cloud beta
+## Governance and observability milestone complete
 
-- [ ] Implement DynamoDB repositories behind the store interface
-- [ ] Add tenant and department partitioning
-- [ ] Add Bedrock Knowledge Bases or OpenSearch vector retrieval
-- [ ] Store documents in an encrypted S3 bucket
-- [ ] Stream model responses over server-sent events
-- [ ] Add Cognito login, logout, and refresh to the existing role-aware navigation
+- [x] Add manager-only usage analytics
+- [x] Add manager-only `/api/admin/readiness` runtime evidence
+- [x] Report LLM provider, grounding path, predictive artifact state, persistence mode, and environment
+- [x] Verify the bundled model artifact hash before inference
+- [x] Surface runtime evidence in the governance UI
+- [x] Keep secrets out of runtime-status responses
 
-## Phase 3 — Enterprise integrations
+## Optional cloud authentication path
 
-- [ ] Integrate a sandbox vehicle telemetry provider
-- [ ] Add ServiceNow/Jira maintenance ticket connectors
-- [ ] Add CRM proposal context for the sales assistant
-- [ ] Add approval gates before an agent changes external systems
-- [ ] Store immutable agent audit events
+- [x] Cognito viewer signup and email-verification implementation exists
+- [x] Role-escalation protections exist for public signup
+- [x] Client-secret support exists through `SECRET_HASH`
+- [ ] Final live Cognito/Vercel verification is optional and not a portfolio-release blocker
 
-## Phase 4 — Reliability and governance
-
-- [ ] Add CloudWatch dashboards, alarms, traces, and cost budgets
-- [ ] Add prompt-injection and sensitive-data filters
-- [ ] Evaluate RAG relevance with a versioned test dataset
-- [ ] Add accessibility and browser end-to-end tests
-- [ ] Add data retention, export, and deletion workflows
-
-## Portfolio release criteria
+## Portfolio release — complete
 
 - [x] Project starts without paid services
 - [x] Every visible page has a working purpose
 - [x] CI fails on test, type, or infrastructure errors
 - [x] AWS architecture can be synthesized
 - [x] Documentation distinguishes demo behavior from production readiness
-- [ ] Add an interface screenshot or short demo video after local review
+- [x] AI answers are grounded before generation
+- [x] Role boundaries are enforced at the API boundary
+- [x] Predictive ML is evaluated on a real held-out dataset
+- [x] Model uncertainty and scope are visible to the user
+- [x] Governance exposes runtime evidence rather than static claims
+
+## Future enterprise extensions — intentionally out of portfolio scope
+
+These are not required to call the portfolio project complete. They are realistic production extensions:
+
+- persistent DynamoDB repositories and tenant partitioning;
+- production vector retrieval / Bedrock Knowledge Bases;
+- encrypted enterprise document storage;
+- sandbox vehicle telemetry integration;
+- ServiceNow/Jira ticket connectors with approval gates;
+- immutable external audit storage;
+- CloudWatch dashboards, tracing, budgets, and alerts;
+- versioned RAG evaluation and browser end-to-end tests;
+- retention, export, deletion, and enterprise compliance workflows.

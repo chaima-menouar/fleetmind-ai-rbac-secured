@@ -110,6 +110,30 @@ class FleetSummaryResponse(BaseModel):
     vehicles: list[VehicleResponse]
 
 
+class FleetKpiResponse(BaseModel):
+    label: str
+    value: str
+    detail: str
+
+
+class FleetRiskResponse(BaseModel):
+    vehicle_id: str
+    model: str
+    location: str
+    risk_score: int = Field(ge=0)
+    status: str
+    health_score: int = Field(ge=0, le=100)
+    battery_percent: int = Field(ge=0, le=100)
+    next_service_days: int = Field(ge=0)
+
+
+class FleetIntelligenceResponse(BaseModel):
+    generated_from: str = "deterministic_fleet_analytics"
+    kpis: list[FleetKpiResponse]
+    risk_ranking: list[FleetRiskResponse]
+    critical_vehicle_ids: list[str]
+
+
 class UsageStatsResponse(BaseModel):
     total_messages: int
     total_agent_runs: int

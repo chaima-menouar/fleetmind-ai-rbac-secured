@@ -8,18 +8,21 @@ import { useAuth } from "../hooks/AuthContext";
 const roleCopy = {
   admin: {
     eyebrow: "MANAGER INTELLIGENCE",
-    title: "Lead the fleet with the right context.",
-    description: "Your assistant focuses on fleet KPIs, risk, availability, priorities, and management decisions.",
+    title: "Lead the fleet with verified context.",
+    description: "Your assistant receives deterministic fleet KPIs and risk rankings before it explains priorities, availability, cost, or operational risk.",
+    boundary: "Management guidance only — no step-by-step repair procedures.",
   },
   technician: {
     eyebrow: "TECHNICIAN INTELLIGENCE",
-    title: "Diagnose faster. Service with confidence.",
-    description: "Your assistant focuses on maintenance, alerts, service procedures, fault triage, and safety checks.",
+    title: "Diagnose faster. Stay evidence-led.",
+    description: "Your assistant combines verified fleet facts with approved technical knowledge for maintenance, fault triage, service procedures, and safety checks.",
+    boundary: "Technical support only — no fleet-management or commercial decisions.",
   },
   viewer: {
     eyebrow: "VIEWER INTELLIGENCE",
-    title: "Understand what you can see.",
-    description: "Your read-only assistant explains fleet status and dashboard information without performing restricted actions.",
+    title: "Understand the fleet without changing it.",
+    description: "Your read-only assistant explains approved fleet status, risk indicators, metrics, and service dates while operational actions remain blocked.",
+    boundary: "Read-only explanations — no tasks, writes, or restricted internal actions.",
   },
 } as const;
 
@@ -45,13 +48,19 @@ export default function ChatPage() {
           <h1>{copy.title}</h1>
           <p>{copy.description}</p>
           <div className="hero-pills">
-            <span><i className="pill-dot cyan" /> Role-scoped assistant</span>
-            <span><i className="pill-dot violet" /> Grounded answers</span>
-            <span><i className="pill-dot pink" /> Server-enforced access</span>
+            <span><i className="pill-dot cyan" /> Deterministic fleet facts</span>
+            <span><i className="pill-dot violet" /> Retrieved approved knowledge</span>
+            <span><i className="pill-dot pink" /> Server-enforced role scope</span>
           </div>
         </div>
-        <span className="demo-badge">ROLE AWARE</span>
+        <span className="demo-badge">GROUNDED AI</span>
       </div>
+      <section className="data-boundary-banner">
+        <div>
+          <strong>{copy.boundary}</strong>
+          <span>Fleet telemetry and service facts are computed or retrieved before generation; the assistant is instructed not to invent them.</span>
+        </div>
+      </section>
       {error && <div className="inline-error">{error}</div>}
       {bots.length > 0 ? (
         <ChatWindow bots={bots} initialBotId={searchParams.get("bot") ?? undefined} />
