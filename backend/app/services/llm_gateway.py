@@ -5,6 +5,7 @@ from typing import Any
 
 from app.core.config import settings
 from app.models.schemas import VehicleResponse
+from app.services.bedrock_safety import guardrail_config
 from app.services.fleet_intelligence import fleet_kpis, grounding_block, ranked_risks
 
 
@@ -183,9 +184,9 @@ def complete(
         if not context_block
         else f"Verified context:\n{context_block}\n\nQuestion:\n{prompt}"
     )
-    response = client.converse(
-        modelId=settings.bedrock_model_id,
-        system=[
+    request: dict[str, Any] = {
+        "modelId": settings.bedrock_model_id,
+        "system": [
             {
                 "text": (
                     system_prompt
@@ -195,8 +196,13 @@ def complete(
                 )
             }
         ],
-        messages=[{"role": "user", "content": [{"text": user_text}]}],
-        inferenceConfig={"maxTokens": 700, "temperature": 0.2, "topP": 0.9},
-    )
+        "messages": [{"role": "user", "content": [{"text": user_text}]}],
+        "inferenceConfig": {"maxTokens": 700, "temperature": 0.2, "topP": 0.9},
+    }
+    configured_guardrail = guardrail_config()
+    if configured_guardrail is not None:
+        request["guardrailConfig"] = configured_guardrail
+
+    response = client.converse(**request)
     blocks = response["output"]["message"]["content"]
     return "\n".join(block["text"] for block in blocks if "text" in block).strip()
