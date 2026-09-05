@@ -30,8 +30,7 @@ export class AuthStack extends Stack {
     });
 
     const writeAttributes = new cognito.ClientAttributes()
-      .withStandardAttributes({ email: true, fullname: true })
-      .withCustomAttributes("department", "role");
+      .withStandardAttributes({ email: true, fullname: true });
 
     this.userPoolClient = this.userPool.addClient("WebClient", {
       userPoolClientName: "fleetmind-web",
