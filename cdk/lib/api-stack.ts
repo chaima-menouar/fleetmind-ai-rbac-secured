@@ -43,6 +43,9 @@ export class ApiStack extends Stack {
         ENVIRONMENT: props.production ? "production" : "demo",
         DEMO_MODE: props.production ? "false" : "true",
         LLM_PROVIDER: props.production ? "bedrock" : "demo",
+        RAG_PROVIDER: "local",
+        BEDROCK_KNOWLEDGE_BASE_ID: "",
+        RAG_TOP_K: "5",
         CONVERSATIONS_TABLE: props.dataStack.conversationsTable.tableName,
         BOTS_TABLE: props.dataStack.botsTable.tableName,
         TASKS_TABLE: props.dataStack.tasksTable.tableName,
@@ -55,7 +58,11 @@ export class ApiStack extends Stack {
     props.dataStack.tasksTable.grantReadWriteData(apiFunction);
     apiFunction.addToRolePolicy(
       new iam.PolicyStatement({
-        actions: ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"],
+        actions: [
+          "bedrock:InvokeModel",
+          "bedrock:InvokeModelWithResponseStream",
+          "bedrock:Retrieve",
+        ],
         resources: ["*"],
       }),
     );
