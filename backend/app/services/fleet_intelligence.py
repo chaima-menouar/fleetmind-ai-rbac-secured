@@ -41,7 +41,8 @@ def _risk_score(vehicle: VehicleResponse) -> int:
 
 
 def ranked_risks(fleet: list[VehicleResponse]) -> list[tuple[VehicleResponse, int]]:
-    return sorted(((vehicle, _risk_score(vehicle)) for vehicle in fleet), key=lambda item: item[1], reverse=True)
+    scored = ((vehicle, _risk_score(vehicle)) for vehicle in fleet)
+    return sorted(scored, key=lambda item: item[1], reverse=True)
 
 
 def fleet_kpis(fleet: list[VehicleResponse]) -> list[FleetInsight]:
@@ -53,11 +54,31 @@ def fleet_kpis(fleet: list[VehicleResponse]) -> list[FleetInsight]:
     avg_battery = round(sum(vehicle.battery_percent for vehicle in fleet) / len(fleet))
     critical = [vehicle.id for vehicle, score in ranked_risks(fleet) if score >= 60]
     return [
-        FleetInsight("Availability", f"{active}/{len(fleet)}", "Vehicles currently marked active."),
-        FleetInsight("Average health", f"{avg_health}%", "Mean health score across the visible fleet."),
-        FleetInsight("Average battery", f"{avg_battery}%", "Mean battery state across the visible fleet."),
-        FleetInsight("Service due <=7d", str(due_soon), "Vehicles requiring service within seven days."),
-        FleetInsight("Critical risk", ", ".join(critical) if critical else "None", "Vehicles with the highest composite operational risk."),
+        FleetInsight(
+            "Availability",
+            f"{active}/{len(fleet)}",
+            "Vehicles currently marked active.",
+        ),
+        FleetInsight(
+            "Average health",
+            f"{avg_health}%",
+            "Mean health score across the visible fleet.",
+        ),
+        FleetInsight(
+            "Average battery",
+            f"{avg_battery}%",
+            "Mean battery state across the visible fleet.",
+        ),
+        FleetInsight(
+            "Service due <=7d",
+            str(due_soon),
+            "Vehicles requiring service within seven days.",
+        ),
+        FleetInsight(
+            "Critical risk",
+            ", ".join(critical) if critical else "None",
+            "Vehicles with the highest composite operational risk.",
+        ),
     ]
 
 
@@ -71,7 +92,8 @@ def grounding_block(fleet: list[VehicleResponse]) -> str:
         lines.append("- Risk ranking:")
         for vehicle, score in risks:
             lines.append(
-                f"  - {vehicle.id}: risk={score}, status={vehicle.status}, health={vehicle.health_score}%, "
-                f"battery={vehicle.battery_percent}%, service_days={vehicle.next_service_days}, location={vehicle.location}"
+                f"  - {vehicle.id}: risk={score}, status={vehicle.status}, "
+                f"health={vehicle.health_score}%, battery={vehicle.battery_percent}%, "
+                f"service_days={vehicle.next_service_days}, location={vehicle.location}"
             )
     return "\n".join(lines)
