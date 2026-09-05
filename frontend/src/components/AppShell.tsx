@@ -10,7 +10,7 @@ const navigation: { to: string; label: string; icon: IconName; end?: boolean; ro
   { to: "/assistant", label: "My assistant", icon: "sparkles", roles: ["admin", "technician", "viewer"] },
   { to: "/marketplace", label: "Assistants", icon: "store", roles: ["admin", "technician"] },
   { to: "/bots/new", label: "Build assistant", icon: "bot", roles: ["admin"] },
-  { to: "/admin", label: "Administration", icon: "shield", roles: ["admin"] },
+  { to: "/admin", label: "Governance", icon: "shield", roles: ["admin"] },
 ];
 
 const roleLabels: Record<UserRole, string> = {
@@ -79,9 +79,9 @@ export default function AppShell() {
         <div className="sidebar-status model-status-card">
           <span className="status-symbol"><Icon name="shield" /></span>
           <div>
-            <small>MODEL STATUS</small>
-            <strong>Fleet intelligence online</strong>
-            <span><i className="status-dot" /> Secure · Live</span>
+            <small>AI STATUS</small>
+            <strong>Grounded intelligence online</strong>
+            <span><i className="status-dot" /> Role scoped · Verified</span>
           </div>
         </div>
       </aside>
@@ -93,13 +93,13 @@ export default function AppShell() {
             <div><strong>FleetMind One</strong><small>Intelligent mobility platform</small></div>
           </div>
           <div className="topbar-actions">
-            <span className="environment-pill"><i /> All systems operational</span>
+            <span className="environment-pill"><i /> Grounded AI active</span>
             <div className="user-chip">
-            <span className="avatar">{initials}</span>
-            <span>
-              <strong>{user?.display_name ?? "Fleet Operations"}</strong>
-              <small>{user ? roleLabels[user.role] : "Fleet user"}</small>
-            </span>
+              <span className="avatar">{initials}</span>
+              <span>
+                <strong>{user?.display_name ?? "Fleet Operations"}</strong>
+                <small>{user ? roleLabels[user.role] : "Fleet user"}</small>
+              </span>
             </div>
             <button className="logout-button" type="button" onClick={() => { logout(); navigate("/login", { replace: true }); }}>Sign out</button>
           </div>
