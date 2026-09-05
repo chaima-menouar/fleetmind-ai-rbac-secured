@@ -40,8 +40,8 @@ export default function HomePage() {
       .catch(() => undefined);
   }, []);
 
-  const criticalCount = intelligence?.risks.filter((item) => item.risk_score >= 60).length ?? 0;
-  const topRisk = intelligence?.risks[0];
+  const criticalCount = intelligence?.risk_ranking.filter((item) => item.risk_score >= 60).length ?? 0;
+  const topRisk = intelligence?.risk_ranking[0];
 
   return (
     <div className="home-page">
