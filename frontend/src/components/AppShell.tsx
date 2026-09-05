@@ -7,7 +7,7 @@ const navigation: { to: string; label: string; icon: IconName; end?: boolean; ro
   { to: "/", label: "Overview", icon: "chart", end: true, roles: ["admin", "technician", "viewer"] },
   { to: "/fleet", label: "Vehicles", icon: "fleet", roles: ["admin", "technician", "viewer"] },
   { to: "/predictive-maintenance", label: "AI maintenance", icon: "pulse", roles: ["admin", "technician"] },
-  { to: "/assistant", label: "Fleet assistant", icon: "sparkles", roles: ["admin", "technician"] },
+  { to: "/assistant", label: "My assistant", icon: "sparkles", roles: ["admin", "technician", "viewer"] },
   { to: "/marketplace", label: "Assistants", icon: "store", roles: ["admin", "technician"] },
   { to: "/bots/new", label: "Build assistant", icon: "bot", roles: ["admin"] },
   { to: "/admin", label: "Administration", icon: "shield", roles: ["admin"] },
