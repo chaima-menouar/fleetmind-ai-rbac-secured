@@ -19,7 +19,7 @@ const roleCopy: Record<UserRole, { kicker: string; title: string; description: s
   viewer: {
     kicker: "READ-ONLY FLEET VIEW",
     title: "Fleet status. Clearly visible.",
-    description: "Follow approved fleet intelligence and ask a read-only assistant without changing operational data.",
+    description: "Follow vehicle availability and service status without changing operational data.",
   },
 };
 
@@ -33,15 +33,15 @@ export default function HomePage() {
 
   useEffect(() => {
     Promise.all([getFleetSummary(), getFleetIntelligence()])
-      .then(([summary, grounded]) => {
+      .then(([summary, insights]) => {
         setFleet(summary);
-        setIntelligence(grounded);
+        setIntelligence(insights);
       })
       .catch(() => undefined);
   }, []);
 
-  const availability = fleet ? Math.round((fleet.active_vehicles / fleet.total_vehicles) * 100) : undefined;
-  const criticalCount = intelligence?.critical_vehicle_ids.length;
+  const criticalCount = intelligence?.risks.filter((item) => item.risk_score >= 60).length ?? 0;
+  const topRisk = intelligence?.risks[0];
 
   return (
     <div className="home-page">
@@ -58,45 +58,50 @@ export default function HomePage() {
             {role === "admin" && <Link className="hero-button hero-button-glass" to="/admin">Open governance</Link>}
           </div>
         </div>
-        <div className="hero-status"><i /> Fleet connected <span>{fleet ? `${fleet.total_vehicles} vehicles visible` : "Secure session"}</span></div>
+        <div className="hero-status"><i /> Fleet intelligence ready <span>{fleet?.total_vehicles ?? 5} vehicles visible</span></div>
       </section>
 
       <section className="overview-strip scroll-reveal" aria-label="Fleet summary">
-        <article><span>Fleet availability</span><strong>{availability === undefined ? "—" : `${availability}%`}</strong><small>Derived from current status</small></article>
-        <article><span>Service due ≤7 days</span><strong>{fleet?.maintenance_due ?? "—"}</strong><small>Deterministic fleet KPI</small></article>
-        <article><span>Average vehicle health</span><strong>{fleet ? `${fleet.average_health}%` : "—"}</strong><small>Across visible vehicles</small></article>
-        <article><span>Critical operational risk</span><strong>{criticalCount ?? "—"}</strong><small>Composite rule-based score</small></article>
+        <article><span>Active vehicles</span><strong>{fleet ? `${fleet.active_vehicles}/${fleet.total_vehicles}` : "—"}</strong><small>Backend-derived availability</small></article>
+        <article><span>Service due</span><strong>{fleet?.maintenance_due ?? "—"}</strong><small>Within the next 7 days</small></article>
+        <article><span>Average vehicle health</span><strong>{fleet ? `${fleet.average_health}%` : "—"}</strong><small>Across the visible fleet</small></article>
+        <article><span>Critical operational risk</span><strong>{criticalCount}</strong><small>{topRisk ? `${topRisk.vehicle_id} ranked first` : "No ranked signal"}</small></article>
       </section>
 
       <section className="product-grid scroll-reveal">
         <Link to="/fleet" className="product-tile tile-light scroll-reveal" style={{ "--reveal-delay": "0ms" } as React.CSSProperties}>
           <span className="tile-icon"><Icon name="fleet" /></span>
-          <small>GROUNDED FLEET CONTROL</small>
-          <h2>Every vehicle.<br />One verified view.</h2>
-          <p>See health, battery, service urgency and deterministic risk before any AI explanation is generated.</p>
+          <small>VEHICLE CONTROL</small>
+          <h2>Every vehicle.<br />One clear view.</h2>
+          <p>See health, battery, location and service priority without digging through dashboards.</p>
           <span className="tile-link">Open vehicles <b>→</b></span>
         </Link>
-        {canOperate && <Link to="/predictive-maintenance" className="product-tile tile-dark scroll-reveal" style={{ "--reveal-delay": "130ms" } as React.CSSProperties}>
-          <span className="tile-icon"><Icon name="pulse" /></span>
-          <small>PREDICTIVE ML</small>
-          <h2>Measured model.<br />Visible evidence.</h2>
-          <p>The Scania APS classifier exposes its dataset, threshold, metrics and limitations instead of hiding model quality.</p>
-          <span className="tile-link">View model evidence <b>→</b></span>
-        </Link>}
+
+        {canOperate ? (
+          <Link to="/predictive-maintenance" className="product-tile tile-dark scroll-reveal" style={{ "--reveal-delay": "130ms" } as React.CSSProperties}>
+            <span className="tile-icon"><Icon name="pulse" /></span>
+            <small>PREDICTIVE CARE</small>
+            <h2>Know sooner.<br />Act smarter.</h2>
+            <p>A trained model turns held-out APS sensor records into traceable maintenance-risk evidence.</p>
+            <span className="tile-link">View AI maintenance <b>→</b></span>
+          </Link>
+        ) : (
+          <article className="product-tile tile-dark scroll-reveal" style={{ "--reveal-delay": "130ms" } as React.CSSProperties}>
+            <span className="tile-icon"><Icon name="shield" /></span>
+            <small>VIEWER ACCESS</small>
+            <h2>Protected by<br />least privilege.</h2>
+            <p>Your account can inspect approved fleet information but cannot run, create, edit, or delete operational actions.</p>
+            <span className="tile-link">Read-only session</span>
+          </article>
+        )}
+
         <Link to="/assistant" className="product-tile tile-accent scroll-reveal" style={{ "--reveal-delay": "260ms" } as React.CSSProperties}>
           <span className="tile-icon"><Icon name="sparkles" /></span>
-          <small>{role === "viewer" ? "READ-ONLY ASSISTANT" : "ROLE-SCOPED ASSISTANT"}</small>
-          <h2>Ask naturally.<br />Stay grounded.</h2>
-          <p>{role === "viewer" ? "Explain approved fleet status without running operational actions." : "Verified fleet analytics and approved knowledge are injected before the LLM responds."}</p>
+          <small>{role === "viewer" ? "VIEWER ASSISTANT" : "FLEET ASSISTANT"}</small>
+          <h2>Ask naturally.<br />Understand faster.</h2>
+          <p>{role === "viewer" ? "Get grounded explanations of the fleet information visible to your role." : "Move from a question to verified fleet context and a role-appropriate next action."}</p>
           <span className="tile-link">Start a conversation <b>→</b></span>
         </Link>
-        {role === "viewer" && <article className="product-tile tile-dark scroll-reveal" style={{ "--reveal-delay": "390ms" } as React.CSSProperties}>
-          <span className="tile-icon"><Icon name="shield" /></span>
-          <small>LEAST PRIVILEGE</small>
-          <h2>Useful access.<br />No operational writes.</h2>
-          <p>Your role can inspect approved fleet information and use its viewer assistant while restricted actions remain blocked by the backend.</p>
-          <span className="tile-link">Server-enforced access</span>
-        </article>}
       </section>
     </div>
   );
