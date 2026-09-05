@@ -11,7 +11,7 @@ export class AuthStack extends Stack {
 
     this.userPool = new cognito.UserPool(this, "UserPool", {
       userPoolName: "fleetmind-users",
-      selfSignUpEnabled: false,
+      selfSignUpEnabled: true,
       signInAliases: { email: true },
       autoVerify: { email: true },
       accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
@@ -29,9 +29,13 @@ export class AuthStack extends Stack {
       removalPolicy: RemovalPolicy.RETAIN,
     });
 
+    const writeAttributes = new cognito.ClientAttributes()
+      .withStandardAttributes({ email: true, fullname: true });
+
     this.userPoolClient = this.userPool.addClient("WebClient", {
       userPoolClientName: "fleetmind-web",
-      authFlows: { userSrp: true },
+      authFlows: { userPassword: true, userSrp: true },
+      writeAttributes,
       preventUserExistenceErrors: true,
       accessTokenValidity: Duration.minutes(60),
       idTokenValidity: Duration.minutes(60),

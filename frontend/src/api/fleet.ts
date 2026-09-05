@@ -1,8 +1,12 @@
 import { apiFetch } from "./client";
-import type { AgentTask, FleetSummary } from "./types";
+import type { AgentTask, FleetIntelligence, FleetSummary } from "./types";
 
 export function getFleetSummary() {
   return apiFetch<FleetSummary>("/api/fleet/summary");
+}
+
+export function getFleetIntelligence() {
+  return apiFetch<FleetIntelligence>("/api/fleet/intelligence");
 }
 
 export function runMaintenanceTriage(vehicleId: string) {

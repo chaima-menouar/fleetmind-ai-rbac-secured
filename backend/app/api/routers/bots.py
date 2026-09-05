@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, 
 
 from app.core.authorization import can_access_bot, ensure_bot_access
 from app.core.config import settings
-from app.core.security import require_admin, require_operator
+from app.core.security import require_admin, require_chat_user
 from app.models.schemas import BotCreate, BotResponse, CurrentUser, KnowledgeUploadResponse
 from app.rag.ingestion import ingest_document
 from app.services.store import store
@@ -23,7 +23,7 @@ def create_bot(
 @router.get("", response_model=list[BotResponse])
 def list_bots(
     shared_only: bool = Query(default=False),
-    user: CurrentUser = Depends(require_operator),
+    user: CurrentUser = Depends(require_chat_user),
 ) -> list[BotResponse]:
     return [
         bot
@@ -33,7 +33,7 @@ def list_bots(
 
 
 @router.get("/{bot_id}", response_model=BotResponse)
-def get_bot(bot_id: str, user: CurrentUser = Depends(require_operator)) -> BotResponse:
+def get_bot(bot_id: str, user: CurrentUser = Depends(require_chat_user)) -> BotResponse:
     bot = store.get_bot(bot_id)
     if bot is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Bot not found.")

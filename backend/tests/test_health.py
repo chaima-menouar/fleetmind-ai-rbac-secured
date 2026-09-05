@@ -108,12 +108,24 @@ def test_viewer_is_read_only_at_api_boundary(
         headers=viewer_headers,
         json={"task_type": "maintenance_triage", "vehicle_id": "FM-4410"},
     ).status_code == 403
-    assert client.get("/api/bots", headers=viewer_headers).status_code == 403
-    assert client.post(
+
+    bots = client.get("/api/bots", headers=viewer_headers)
+    assert bots.status_code == 200
+    assert {bot["id"] for bot in bots.json()} == {"viewer-assistant"}
+
+    allowed_chat = client.post(
         "/api/chat/message",
         headers=viewer_headers,
-        json={"bot_id": "technician", "content": "Hello"},
-    ).status_code == 403
+        json={"bot_id": "viewer-assistant", "content": "Explain the fleet status"},
+    )
+    assert allowed_chat.status_code == 200
+
+    forbidden_chat = client.post(
+        "/api/chat/message",
+        headers=viewer_headers,
+        json={"bot_id": "technician", "content": "Diagnose this fault"},
+    )
+    assert forbidden_chat.status_code == 403
 
 
 def test_technician_only_sees_approved_assistants(

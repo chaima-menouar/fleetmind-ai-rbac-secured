@@ -54,6 +54,30 @@ export interface FleetSummary {
   vehicles: Vehicle[];
 }
 
+export interface FleetKpi {
+  label: string;
+  value: string;
+  detail: string;
+}
+
+export interface FleetRisk {
+  vehicle_id: string;
+  model: string;
+  location: string;
+  risk_score: number;
+  status: string;
+  health_score: number;
+  battery_percent: number;
+  next_service_days: number;
+}
+
+export interface FleetIntelligence {
+  generated_from: "deterministic_fleet_analytics";
+  kpis: FleetKpi[];
+  risk_ranking: FleetRisk[];
+  critical_vehicle_ids: string[];
+}
+
 export interface AgentTask {
   task_id: string;
   status: "completed" | "failed";

@@ -110,6 +110,30 @@ class FleetSummaryResponse(BaseModel):
     vehicles: list[VehicleResponse]
 
 
+class FleetKpiResponse(BaseModel):
+    label: str
+    value: str
+    detail: str
+
+
+class FleetRiskResponse(BaseModel):
+    vehicle_id: str
+    model: str
+    location: str
+    risk_score: int = Field(ge=0)
+    status: str
+    health_score: int = Field(ge=0, le=100)
+    battery_percent: int = Field(ge=0, le=100)
+    next_service_days: int = Field(ge=0)
+
+
+class FleetIntelligenceResponse(BaseModel):
+    generated_from: str = "deterministic_fleet_analytics"
+    kpis: list[FleetKpiResponse]
+    risk_ranking: list[FleetRiskResponse]
+    critical_vehicle_ids: list[str]
+
+
 class UsageStatsResponse(BaseModel):
     total_messages: int
     total_agent_runs: int
@@ -207,6 +231,17 @@ class CurrentUser(BaseModel):
 class LoginRequest(BaseModel):
     email: str = Field(min_length=3, max_length=254)
     password: str = Field(min_length=1, max_length=256)
+
+
+class ViewerSignupStartRequest(BaseModel):
+    display_name: str = Field(min_length=2, max_length=80)
+    email: str = Field(min_length=3, max_length=254)
+    password: str = Field(min_length=12, max_length=256)
+
+
+class ViewerSignupConfirmRequest(BaseModel):
+    email: str = Field(min_length=3, max_length=254)
+    verification_code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
 
 
 class ViewerRegistrationRequest(BaseModel):

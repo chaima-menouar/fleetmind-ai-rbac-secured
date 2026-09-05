@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     llm_provider: str = "demo"
     aws_region: str = "us-east-1"
     bedrock_model_id: str = "amazon.nova-lite-v1:0"
+    cognito_client_id: str = ""
+    cognito_client_secret: str = ""
     allowed_origins: str = "http://localhost:5173"
     conversations_table: str | None = None
     bots_table: str | None = None
@@ -44,6 +46,10 @@ class Settings(BaseSettings):
     @property
     def cors_origins(self) -> list[str]:
         return [origin.strip() for origin in self.allowed_origins.split(",") if origin.strip()]
+
+    @property
+    def cognito_enabled(self) -> bool:
+        return bool(self.cognito_client_id.strip())
 
 
 @lru_cache

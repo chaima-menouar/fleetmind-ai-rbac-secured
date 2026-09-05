@@ -2,19 +2,17 @@
 
 from fastapi import HTTPException, status
 
-from app.models.schemas import BotResponse, CurrentUser, Department, UserRole
+from app.models.schemas import BotResponse, CurrentUser, UserRole
 
-_TECHNICIAN_DEPARTMENTS = {
-    Department.MAINTENANCE,
-    Department.ENGINEERING,
-    Department.SUPPORT,
+_ROLE_BOTS = {
+    UserRole.ADMIN: {"fleet-manager"},
+    UserRole.TECHNICIAN: {"technician"},
+    UserRole.VIEWER: {"viewer-assistant"},
 }
 
 
 def can_access_bot(user: CurrentUser, bot: BotResponse) -> bool:
-    if user.role is UserRole.ADMIN:
-        return True
-    return user.role is UserRole.TECHNICIAN and bot.department in _TECHNICIAN_DEPARTMENTS
+    return bot.id in _ROLE_BOTS.get(user.role, set())
 
 
 def ensure_bot_access(user: CurrentUser, bot: BotResponse) -> None:

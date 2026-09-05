@@ -8,7 +8,7 @@ const accounts = [
 ];
 
 export default function LoginPage() {
-  const { login, createViewer, isAuthenticated, isLoading } = useAuth();
+  const { login, requestViewerCode, createViewer, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [email, setEmail] = useState(accounts[0].email);
@@ -44,13 +44,22 @@ export default function LoginPage() {
     setError("");
   };
 
-  const register = (event: FormEvent) => {
+  const register = async (event: FormEvent) => {
     event.preventDefault();
     setError("");
     if (name.trim().length < 2) return setError("Enter your full name.");
     if (password.length < 12) return setError("Password must contain at least 12 characters.");
     if (password !== confirmation) return setError("Passwords do not match.");
-    setMode("verify");
+    setLoading(true);
+    try {
+      await requestViewerCode(name, email, password);
+      setCode("");
+      setMode("verify");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not send the verification email.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const verify = async (event: FormEvent) => {
@@ -58,10 +67,10 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      await createViewer(name, email, password, code);
+      await createViewer(email, password, code);
       navigate("/", { replace: true });
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Account creation failed.");
+      setError(caught instanceof Error ? caught.message : "Account verification failed.");
     } finally { setLoading(false); }
   };
 
@@ -94,15 +103,15 @@ export default function LoginPage() {
             <label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" minLength={12} required /><small>12+ characters with upper-case, lower-case, number, and symbol.</small></label>
             <label>Confirm password<input type="password" value={confirmation} onChange={(event) => setConfirmation(event.target.value)} autoComplete="new-password" required /></label>
             {error && <div className="login-error">{error}</div>}
-            <button type="submit">Continue to verification</button>
+            <button type="submit" disabled={loading}>{loading ? "Sending code…" : "Send verification code"}</button>
           </form>}
           {mode === "verify" && <form onSubmit={verify}>
-            <div className="demo-code"><span>DEMO VERIFICATION CODE</span><strong>482913</strong><small>Amazon Cognito will email this code in production.</small></div>
+            <div className="demo-code"><span>EMAIL VERIFICATION</span><strong>6-digit code</strong><small>Check your inbox and spam folder. The code is sent by Amazon Cognito.</small></div>
             <label>Verification code<input inputMode="numeric" maxLength={6} value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))} placeholder="000000" required /></label>
             {error && <div className="login-error">{error}</div>}
-            <button type="submit" disabled={loading}>{loading ? "Creating account…" : "Verify and create viewer"}</button>
+            <button type="submit" disabled={loading || code.length !== 6}>{loading ? "Verifying…" : "Verify and create viewer"}</button>
           </form>}
-          {mode === "login" && <button className="account-switch" type="button" onClick={() => { setMode("register"); setName(""); setEmail(""); setPassword(""); setError(""); }}>New viewer? Create an account</button>}
+          {mode === "login" && <button className="account-switch" type="button" onClick={() => { setMode("register"); setName(""); setEmail(""); setPassword(""); setConfirmation(""); setError(""); }}>New viewer? Create an account</button>}
           {mode !== "login" && <button className="account-switch" type="button" onClick={() => { setMode("login"); setError(""); }}>Back to sign in</button>}
           {mode === "login" && <div className="demo-access"><span>COMPANY TEST ACCOUNTS</span><div>{accounts.map((account, index) => <button key={account.role} type="button" onClick={() => chooseAccount(index)}>{account.role}</button>)}</div><small>Select an account, then enter its company-issued password.</small></div>}
           <footer><span className="lock-mark">⌁</span> Signed session · server-enforced role access</footer>
