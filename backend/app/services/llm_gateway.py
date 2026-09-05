@@ -26,6 +26,24 @@ def _role_mode(system_prompt: str) -> str:
     return "manager"
 
 
+def _mentioned_vehicle(prompt: str, fleet: list[VehicleResponse]) -> VehicleResponse | None:
+    lowered = prompt.lower()
+    return next((vehicle for vehicle in fleet if vehicle.id.lower() in lowered), None)
+
+
+def _vehicle_snapshot(vehicle: VehicleResponse, role: str) -> str:
+    core = (
+        f"{vehicle.id} ({vehicle.model}) is in {vehicle.location}. Status: {vehicle.status}. "
+        f"Health: {vehicle.health_score}%. Battery: {vehicle.battery_percent}%. "
+        f"Service is {_service_label(vehicle.next_service_days)}."
+    )
+    if role == "technician":
+        return core + " Use these observed fields as the starting point, then verify active alerts and service history before selecting a repair procedure."
+    if role == "manager":
+        return core + " Use this as an operational signal for availability, maintenance scheduling, and resource prioritization rather than as a remote diagnosis."
+    return core + " This is a read-only explanation; operational changes must be handled by an authorized technician or manager."
+
+
 def _demo_completion(
     prompt: str,
     context: list[str],
@@ -36,8 +54,11 @@ def _demo_completion(
     role = _role_mode(system_prompt)
     risks = ranked_risks(fleet)
     top_vehicle = risks[0][0] if risks else None
+    mentioned = _mentioned_vehicle(prompt, fleet)
 
-    if any(word in lowered for word in ("battery", "charge", "range")) and fleet:
+    if mentioned is not None:
+        guidance = _vehicle_snapshot(mentioned, role)
+    elif any(word in lowered for word in ("battery", "charge", "range")) and fleet:
         vehicle = min(fleet, key=lambda item: item.battery_percent)
         core = (
             f"{vehicle.id} has the lowest battery level at {vehicle.battery_percent}% with a "
