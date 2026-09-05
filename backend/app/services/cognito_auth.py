@@ -92,7 +92,9 @@ def start_viewer_signup(display_name: str, email: str, password: str) -> None:
         if code == "UsernameExistsException":
             raise CognitoAuthError("An account already exists for this email.") from exc
         if code in {"InvalidPasswordException", "InvalidParameterException"}:
-            raise CognitoAuthError("The registration details do not meet the account requirements.") from exc
+            raise CognitoAuthError(
+                "The registration details do not meet the account requirements."
+            ) from exc
         raise CognitoAuthError("The verification email could not be sent.") from exc
 
 
@@ -133,7 +135,9 @@ def login(email: str, password: str) -> tuple[str, int, CurrentUser]:
             AuthParameters=auth_parameters,
         )
     except ClientError as exc:
-        raise CognitoAuthError("Email or password is incorrect, or the account is not verified.") from exc
+        raise CognitoAuthError(
+            "Email or password is incorrect, or the account is not verified."
+        ) from exc
 
     result = response.get("AuthenticationResult") or {}
     token = str(result.get("AccessToken", ""))
