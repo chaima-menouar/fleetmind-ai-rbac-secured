@@ -1,8 +1,4 @@
-"""Thread-safe demo repository.
-
-The local MVP deliberately keeps data in memory. The CDK project provisions the
-DynamoDB tables that replace this adapter in a production deployment.
-"""
+"""Thread-safe local repository with optional DynamoDB persistence."""
 
 from collections import Counter
 from datetime import UTC, datetime
@@ -17,6 +13,7 @@ from app.models.schemas import (
     MessageRole,
     VehicleResponse,
 )
+from app.services.cloud_store import cloud_store
 
 
 def _now() -> datetime:
@@ -95,10 +92,12 @@ class DemoStore:
                 id="sales-copilot",
                 name="Sales Copilot",
                 department="sales",
-                description="Builds concise, data-aware proposals for enterprise fleet customers.",
+                description=(
+                    "Builds concise, data-aware proposals for enterprise fleet customers."
+                ),
                 system_prompt=(
-                    "You are an enterprise automotive sales copilot. Ask for customer constraints "
-                    "and clearly distinguish known facts from assumptions."
+                    "You are an enterprise automotive sales copilot. Ask for customer "
+                    "constraints and clearly distinguish known facts from assumptions."
                 ),
                 knowledge_source_ids=["fleet-offers"],
                 is_shared=True,
@@ -164,14 +163,21 @@ class DemoStore:
 
     def list_bots(self, shared_only: bool = False) -> list[BotResponse]:
         with self._lock:
-            bots = list(self._bots.values())
+            merged = dict(self._bots)
+        if cloud_store.bots_enabled:
+            for bot in cloud_store.list_bots():
+                merged[bot.id] = bot
+        bots = list(merged.values())
         if shared_only:
             bots = [bot for bot in bots if bot.is_shared]
         return sorted(bots, key=lambda bot: bot.name.lower())
 
     def get_bot(self, bot_id: str) -> BotResponse | None:
         with self._lock:
-            return self._bots.get(bot_id)
+            local = self._bots.get(bot_id)
+        if local is not None:
+            return local
+        return cloud_store.get_bot(bot_id)
 
     def create_bot(self, payload: BotCreate) -> BotResponse:
         slug = "-".join(payload.name.lower().split())
@@ -184,15 +190,18 @@ class DemoStore:
         )
         with self._lock:
             self._bots[bot_id] = bot
+        cloud_store.put_bot(bot)
         return bot
 
     def attach_source(self, bot_id: str, source_id: str) -> None:
         with self._lock:
             bot = self._bots[bot_id]
             if source_id not in bot.knowledge_source_ids:
-                self._bots[bot_id] = bot.model_copy(
+                bot = bot.model_copy(
                     update={"knowledge_source_ids": [*bot.knowledge_source_ids, source_id]}
                 )
+                self._bots[bot_id] = bot
+        cloud_store.put_bot(bot)
 
     def add_message(
         self,
@@ -201,15 +210,25 @@ class DemoStore:
         role: MessageRole,
         content: str,
     ) -> ChatHistoryItem:
-        message = ChatHistoryItem(id=uuid4().hex, role=role, content=content, created_at=_now())
+        message = ChatHistoryItem(
+            id=uuid4().hex,
+            role=role,
+            content=content,
+            created_at=_now(),
+        )
         with self._lock:
             existing_owner = self._conversation_owners.setdefault(conversation_id, owner_id)
             if existing_owner != owner_id:
                 raise PermissionError("Conversation access denied.")
             self._conversations.setdefault(conversation_id, []).append(message)
+        cloud_store.put_message(conversation_id, owner_id, message)
         return message
 
     def get_history(self, conversation_id: str, owner_id: str) -> list[ChatHistoryItem]:
+        if cloud_store.conversations_enabled:
+            persisted = cloud_store.get_history(conversation_id, owner_id)
+            if persisted is not None and persisted:
+                return persisted
         with self._lock:
             existing_owner = self._conversation_owners.get(conversation_id)
             if existing_owner is not None and existing_owner != owner_id:
@@ -224,6 +243,7 @@ class DemoStore:
         with self._lock:
             self._tasks[task.task_id] = task
             self._task_owners[task.task_id] = owner_id
+        cloud_store.put_task(task, owner_id)
         return task
 
     def get_task(
@@ -232,6 +252,10 @@ class DemoStore:
         requester_id: str,
         allow_all: bool = False,
     ) -> AgentTaskResponse | None:
+        if cloud_store.tasks_enabled:
+            persisted = cloud_store.get_task(task_id, requester_id, allow_all)
+            if persisted is not None:
+                return persisted
         with self._lock:
             owner_id = self._task_owners.get(task_id)
             if owner_id is not None and owner_id != requester_id and not allow_all:
