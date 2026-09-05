@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.agents.orchestrator import run_task
 from app.core.security import require_operator
 from app.models.schemas import AgentTaskRequest, AgentTaskResponse, CurrentUser, UserRole
+from app.services.audit import emit
 from app.services.store import store
 
 router = APIRouter()
@@ -16,9 +17,26 @@ def run_agent_task(
     user: CurrentUser = Depends(require_operator),
 ) -> AgentTaskResponse:
     try:
-        return run_task(payload, user.id)
+        task = run_task(payload, user.id)
     except ValueError as exc:
+        emit(
+            "agent_run_rejected",
+            user_id=user.id,
+            role=user.role.value,
+            task_type=payload.task_type,
+            vehicle_id=payload.vehicle_id,
+        )
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    emit(
+        "agent_run_completed",
+        user_id=user.id,
+        role=user.role.value,
+        task_type=payload.task_type,
+        vehicle_id=payload.vehicle_id,
+        task_id=task.task_id,
+        task_status=task.status,
+    )
+    return task
 
 
 @router.get("/tasks/{task_id}", response_model=AgentTaskResponse)
