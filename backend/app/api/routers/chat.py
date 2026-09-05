@@ -14,6 +14,7 @@ from app.models.schemas import (
     MessageRole,
 )
 from app.rag.retrieval import retrieve
+from app.services.audit import emit
 from app.services.llm_gateway import complete
 from app.services.store import store
 
@@ -44,6 +45,14 @@ def send_message(
             fleet=store.vehicles(),
         )
     except Exception as exc:
+        emit(
+            "assistant_request_failed",
+            user_id=user.id,
+            role=user.role.value,
+            bot_id=bot.id,
+            conversation_id=conversation_id,
+            source_count=len(context),
+        )
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="The configured LLM provider could not complete the request.",
@@ -57,6 +66,14 @@ def send_message(
     )
     store.record_assistant_message(bot.id)
     sources = [item.split("]", 1)[0].lstrip("[") for item in context]
+    emit(
+        "assistant_request_completed",
+        user_id=user.id,
+        role=user.role.value,
+        bot_id=bot.id,
+        conversation_id=conversation_id,
+        source_count=len(sources),
+    )
     return ChatMessageResponse(
         conversation_id=conversation_id,
         bot_id=bot.id,
