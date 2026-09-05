@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     aws_region: str = "us-east-1"
     bedrock_model_id: str = "amazon.nova-lite-v1:0"
     cognito_client_id: str = ""
+    cognito_client_secret: str = ""
     allowed_origins: str = "http://localhost:5173"
     conversations_table: str | None = None
     bots_table: str | None = None
