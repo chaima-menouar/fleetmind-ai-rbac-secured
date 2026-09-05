@@ -33,23 +33,47 @@
 - [x] Run server-side inference against reproducible held-out examples
 - [x] Keep fictional fleet triage visually separate from evaluated ML
 
+## Grounded AI milestone complete
+
+- [x] Compute fleet KPIs before LLM generation
+- [x] Add deterministic composite operational-risk ranking
+- [x] Publish authenticated `/api/fleet/intelligence` evidence
+- [x] Inject verified fleet analytics into demo and Bedrock assistant context
+- [x] Add anti-hallucination instructions for telemetry, service dates, and fleet facts
+- [x] Give manager, technician, and viewer different assistant scopes
+- [x] Allow viewer explanations while blocking viewer operational actions server-side
+- [x] Replace hard-coded home metrics with backend-derived fleet signals
+- [x] Surface grounded analytics and risk ranking in Fleet Command
+- [x] Add unit and API tests for risk ranking and intelligence access
+
+## Authentication milestone — implementation complete, deployment verification pending
+
+- [x] Add Cognito viewer signup start/confirm API
+- [x] Add email verification flow in the React login experience
+- [x] Support Cognito app clients with a client secret via `SECRET_HASH`
+- [x] Preserve manager and technician demo accounts while `DEMO_MODE=true`
+- [x] Prevent public signup from assigning privileged roles
+- [x] Configure Cognito user pool/app client and Vercel environment variables
+- [ ] Complete one fresh Vercel Preview verification test after deployment quota resets
+- [ ] Merge Cognito PR after real email-code verification passes
+
 ## Next domain milestone
 
 - [ ] Compare multiple predictive-maintenance algorithms on identical, leakage-safe splits
 - [ ] Select the final model using failure cost, recall, precision, and calibration evidence
-- [ ] Add feature-level explanations and map every prediction to a vehicle and recommendation
-- [ ] Define the approved fleet knowledge corpus, metadata, ownership, and update process
-- [ ] Replace lexical retrieval with Amazon Bedrock Knowledge Bases and role-aware metadata filters
-- [ ] Feed authorized vehicle and predictive-maintenance results into grounded assistant responses
+- [ ] Add feature-level explanations for APS predictions
+- [ ] Define an approved fleet knowledge corpus with metadata, ownership, and update rules
+- [ ] Replace lexical retrieval with a production vector retrieval adapter when a free/safe deployment path is chosen
+- [ ] Evaluate grounded assistant answers with a versioned question-and-evidence test set
 
 ## Phase 2 — Persistent cloud beta
 
 - [ ] Implement DynamoDB repositories behind the store interface
 - [ ] Add tenant and department partitioning
-- [ ] Add Bedrock Knowledge Bases or OpenSearch vector retrieval
-- [ ] Store documents in an encrypted S3 bucket
+- [ ] Store approved documents in encrypted object storage
+- [ ] Add production vector retrieval with role-aware metadata filters
 - [ ] Stream model responses over server-sent events
-- [ ] Add Cognito login, logout, and refresh to the existing role-aware navigation
+- [ ] Add refresh-token/session-lifecycle handling for production Cognito users
 
 ## Phase 3 — Enterprise integrations
 
@@ -74,4 +98,6 @@
 - [x] CI fails on test, type, or infrastructure errors
 - [x] AWS architecture can be synthesized
 - [x] Documentation distinguishes demo behavior from production readiness
-- [ ] Add an interface screenshot or short demo video after local review
+- [x] AI answers are grounded in deterministic fleet analytics before generation
+- [x] Role boundaries are enforced by the backend, not only hidden in the frontend
+- [ ] Add a final interface screenshot or short demo video after deployment review
