@@ -1,18 +1,21 @@
 """Tests for optional Bedrock Guardrails configuration."""
 
+from app.core.config import settings
 from app.services.bedrock_safety import guardrail_config, guardrail_enabled
 
 
-def test_guardrail_disabled_without_identifier(monkeypatch) -> None:
-    monkeypatch.delenv("BEDROCK_GUARDRAIL_ID", raising=False)
-    monkeypatch.delenv("BEDROCK_GUARDRAIL_VERSION", raising=False)
+def test_guardrail_disabled_in_free_tier_only_mode(monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    monkeypatch.setattr(settings, "aws_free_tier_only", True)
+    monkeypatch.setattr(settings, "bedrock_guardrail_id", "guardrail-demo")
+    monkeypatch.setattr(settings, "bedrock_guardrail_version", "2")
     assert guardrail_config() is None
     assert guardrail_enabled() is False
 
 
-def test_guardrail_configuration_uses_environment(monkeypatch) -> None:
-    monkeypatch.setenv("BEDROCK_GUARDRAIL_ID", "guardrail-demo")
-    monkeypatch.setenv("BEDROCK_GUARDRAIL_VERSION", "2")
+def test_guardrail_configuration_works_outside_free_tier_mode(monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    monkeypatch.setattr(settings, "aws_free_tier_only", False)
+    monkeypatch.setattr(settings, "bedrock_guardrail_id", "guardrail-demo")
+    monkeypatch.setattr(settings, "bedrock_guardrail_version", "2")
     assert guardrail_config() == {
         "guardrailIdentifier": "guardrail-demo",
         "guardrailVersion": "2",
