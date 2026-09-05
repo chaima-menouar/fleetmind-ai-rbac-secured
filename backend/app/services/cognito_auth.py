@@ -1,5 +1,8 @@
 """Amazon Cognito adapter for real viewer email verification and sign-in."""
 
+import base64
+import hashlib
+import hmac
 from functools import lru_cache
 
 import boto3
@@ -23,6 +26,18 @@ def _require_enabled() -> str:
     if not client_id:
         raise CognitoAuthError("Email verification is not configured yet.")
     return client_id
+
+
+def _secret_hash(username: str) -> str | None:
+    secret = settings.cognito_client_secret.strip()
+    if not secret:
+        return None
+    digest = hmac.new(
+        secret.encode(),
+        f"{username}{settings.cognito_client_id.strip()}".encode(),
+        hashlib.sha256,
+    ).digest()
+    return base64.b64encode(digest).decode()
 
 
 def _attributes(response: dict) -> dict[str, str]:
@@ -58,16 +73,20 @@ def _user_from_access_token(access_token: str) -> CurrentUser:
 def start_viewer_signup(display_name: str, email: str, password: str) -> None:
     client_id = _require_enabled()
     normalized_email = email.strip().lower()
+    kwargs = {
+        "ClientId": client_id,
+        "Username": normalized_email,
+        "Password": password,
+        "UserAttributes": [
+            {"Name": "email", "Value": normalized_email},
+            {"Name": "name", "Value": display_name.strip()},
+        ],
+    }
+    secret_hash = _secret_hash(normalized_email)
+    if secret_hash:
+        kwargs["SecretHash"] = secret_hash
     try:
-        _client().sign_up(
-            ClientId=client_id,
-            Username=normalized_email,
-            Password=password,
-            UserAttributes=[
-                {"Name": "email", "Value": normalized_email},
-                {"Name": "name", "Value": display_name.strip()},
-            ],
-        )
+        _client().sign_up(**kwargs)
     except ClientError as exc:
         code = exc.response.get("Error", {}).get("Code", "")
         if code == "UsernameExistsException":
@@ -79,12 +98,17 @@ def start_viewer_signup(display_name: str, email: str, password: str) -> None:
 
 def confirm_viewer_signup(email: str, verification_code: str) -> None:
     client_id = _require_enabled()
+    normalized_email = email.strip().lower()
+    kwargs = {
+        "ClientId": client_id,
+        "Username": normalized_email,
+        "ConfirmationCode": verification_code,
+    }
+    secret_hash = _secret_hash(normalized_email)
+    if secret_hash:
+        kwargs["SecretHash"] = secret_hash
     try:
-        _client().confirm_sign_up(
-            ClientId=client_id,
-            Username=email.strip().lower(),
-            ConfirmationCode=verification_code,
-        )
+        _client().confirm_sign_up(**kwargs)
     except ClientError as exc:
         code = exc.response.get("Error", {}).get("Code", "")
         if code in {"CodeMismatchException", "ExpiredCodeException"}:
@@ -94,14 +118,19 @@ def confirm_viewer_signup(email: str, verification_code: str) -> None:
 
 def login(email: str, password: str) -> tuple[str, int, CurrentUser]:
     client_id = _require_enabled()
+    normalized_email = email.strip().lower()
+    auth_parameters = {
+        "USERNAME": normalized_email,
+        "PASSWORD": password,
+    }
+    secret_hash = _secret_hash(normalized_email)
+    if secret_hash:
+        auth_parameters["SECRET_HASH"] = secret_hash
     try:
         response = _client().initiate_auth(
             ClientId=client_id,
             AuthFlow="USER_PASSWORD_AUTH",
-            AuthParameters={
-                "USERNAME": email.strip().lower(),
-                "PASSWORD": password,
-            },
+            AuthParameters=auth_parameters,
         )
     except ClientError as exc:
         raise CognitoAuthError("Email or password is incorrect, or the account is not verified.") from exc
