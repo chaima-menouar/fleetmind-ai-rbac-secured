@@ -146,3 +146,4 @@ def require_roles(*roles: UserRole) -> Callable[..., CurrentUser]:
 
 require_admin = require_roles(UserRole.ADMIN)
 require_operator = require_roles(UserRole.ADMIN, UserRole.TECHNICIAN)
+require_chat_user = require_roles(UserRole.ADMIN, UserRole.TECHNICIAN, UserRole.VIEWER)
