@@ -1,4 +1,4 @@
-"""Session endpoints for company demo accounts and Supabase viewer accounts."""
+"""Session endpoints for company demo accounts and Cognito viewer accounts."""
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
@@ -13,9 +13,9 @@ from app.models.schemas import (
     ViewerSignupConfirmRequest,
     ViewerSignupStartRequest,
 )
-from app.services import supabase_auth
+from app.services import cognito_auth
+from app.services.cognito_auth import CognitoAuthError
 from app.services.demo_auth import demo_auth
-from app.services.supabase_auth import SupabaseAuthError
 
 router = APIRouter()
 
@@ -25,10 +25,10 @@ def _demo_session(user: CurrentUser) -> AuthSessionResponse:
     return AuthSessionResponse(access_token=token, expires_in=expires_in, user=user)
 
 
-def _supabase_session(email: str, password: str) -> AuthSessionResponse:
+def _cognito_session(email: str, password: str) -> AuthSessionResponse:
     try:
-        token, expires_in, user = supabase_auth.login(email, password)
-    except SupabaseAuthError as exc:
+        token, expires_in, user = cognito_auth.login(email, password)
+    except CognitoAuthError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
     return AuthSessionResponse(access_token=token, expires_in=expires_in, user=user)
 
@@ -40,10 +40,13 @@ def login(payload: LoginRequest) -> AuthSessionResponse:
         if user is not None:
             return _demo_session(user)
 
-    if supabase_auth.enabled():
-        return _supabase_session(payload.email, payload.password)
+    if settings.cognito_enabled:
+        return _cognito_session(payload.email, payload.password)
 
-    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Email or password is incorrect.")
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Email or password is incorrect.",
+    )
 
 
 @router.post(
@@ -52,28 +55,28 @@ def login(payload: LoginRequest) -> AuthSessionResponse:
     status_code=status.HTTP_202_ACCEPTED,
 )
 def start_viewer_registration(payload: ViewerSignupStartRequest) -> ApiMessage:
-    if not supabase_auth.enabled():
+    if not settings.cognito_enabled:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Email verification is not configured yet.",
         )
     try:
-        supabase_auth.start_viewer_signup(payload.display_name, payload.email, payload.password)
-    except SupabaseAuthError as exc:
+        cognito_auth.start_viewer_signup(payload.display_name, payload.email, payload.password)
+    except CognitoAuthError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     return ApiMessage(message="Verification code sent to your email.")
 
 
 @router.post("/register-viewer/confirm", response_model=ApiMessage)
 def confirm_viewer_registration(payload: ViewerSignupConfirmRequest) -> ApiMessage:
-    if not supabase_auth.enabled():
+    if not settings.cognito_enabled:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Email verification is not configured yet.",
         )
     try:
-        supabase_auth.confirm_viewer_signup(payload.email, payload.verification_code)
-    except SupabaseAuthError as exc:
+        cognito_auth.confirm_viewer_signup(payload.email, payload.verification_code)
+    except CognitoAuthError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     return ApiMessage(message="Email verified. You can now sign in.")
 
@@ -86,8 +89,11 @@ def confirm_viewer_registration(payload: ViewerSignupConfirmRequest) -> ApiMessa
 )
 def register_viewer_legacy(payload: ViewerRegistrationRequest) -> AuthSessionResponse:
     """Legacy local-only endpoint kept for automated/local demo compatibility."""
-    if not settings.demo_mode or supabase_auth.enabled():
-        raise HTTPException(status_code=status.HTTP_410_GONE, detail="Use the email verification registration flow.")
+    if not settings.demo_mode or settings.cognito_enabled:
+        raise HTTPException(
+            status_code=status.HTTP_410_GONE,
+            detail="Use the email verification registration flow.",
+        )
     try:
         user = demo_auth.register_viewer(
             payload.display_name,
