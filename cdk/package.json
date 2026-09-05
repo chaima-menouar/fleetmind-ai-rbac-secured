@@ -5,8 +5,11 @@
   "scripts": {
     "build": "tsc",
     "deploy": "cdk deploy --all",
+    "deploy:free": "cdk deploy --all -c freeTierOnly=true -c production=false",
     "diff": "cdk diff",
-    "synth": "cdk synth"
+    "diff:free": "cdk diff --all -c freeTierOnly=true -c production=false",
+    "synth": "cdk synth",
+    "synth:free": "cdk synth -c freeTierOnly=true -c production=false"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
