@@ -30,6 +30,8 @@ export class ApiStack extends Stack {
       removalPolicy: props.production ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
     });
 
+    const demoSigningSecret = `fleetmind-demo-${this.account}-${this.region}-free-tier-v1`;
+
     const apiFunction = new lambda.DockerImageFunction(this, "FastApiFunction", {
       functionName: "fleetmind-api",
       code: lambda.DockerImageCode.fromImageAsset(
@@ -44,6 +46,8 @@ export class ApiStack extends Stack {
         ENVIRONMENT: props.production ? "production" : "demo",
         AWS_FREE_TIER_ONLY: props.freeTierOnly ? "true" : "false",
         DEMO_MODE: props.freeTierOnly ? "true" : props.production ? "false" : "true",
+        DEMO_AUTH_SECRET: demoSigningSecret,
+        DEMO_TOKEN_TTL_SECONDS: "86400",
         LLM_PROVIDER: props.freeTierOnly ? "demo" : props.production ? "bedrock" : "demo",
         RAG_PROVIDER: "local",
         BEDROCK_KNOWLEDGE_BASE_ID: "",
