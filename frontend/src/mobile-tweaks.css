@@ -1,0 +1,7 @@
+@media (max-device-width: 700px) {
+  html,
+  body {
+    -webkit-text-size-adjust: 108%;
+    text-size-adjust: 108%;
+  }
+}
