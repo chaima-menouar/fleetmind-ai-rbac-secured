@@ -67,6 +67,30 @@ def start_viewer_registration(payload: ViewerSignupStartRequest) -> ApiMessage:
     return ApiMessage(message="Verification code sent to your email.")
 
 
+@router.post(
+    "/register-viewer/demo",
+    response_model=AuthSessionResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def register_viewer_demo(payload: ViewerSignupStartRequest) -> AuthSessionResponse:
+    """Create a read-only viewer directly in free-tier demo mode."""
+    if not settings.demo_mode or settings.cognito_enabled:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Demo viewer registration is unavailable.",
+        )
+    try:
+        user = demo_auth.register_viewer(
+            payload.display_name,
+            payload.email,
+            payload.password,
+            settings.demo_verification_code,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return _demo_session(user)
+
+
 @router.post("/register-viewer/confirm", response_model=ApiMessage)
 def confirm_viewer_registration(payload: ViewerSignupConfirmRequest) -> ApiMessage:
     if not settings.cognito_enabled:
