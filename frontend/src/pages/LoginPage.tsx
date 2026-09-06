@@ -52,11 +52,15 @@ export default function LoginPage() {
     if (password !== confirmation) return setError("Passwords do not match.");
     setLoading(true);
     try {
-      await requestViewerCode(name, email, password);
+      const createdUser = await requestViewerCode(name, email, password);
+      if (createdUser) {
+        navigate("/", { replace: true });
+        return;
+      }
       setCode("");
       setMode("verify");
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not send the verification email.");
+      setError(caught instanceof Error ? caught.message : "Could not create the viewer account.");
     } finally {
       setLoading(false);
     }
@@ -103,7 +107,7 @@ export default function LoginPage() {
             <label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" minLength={12} required /><small>12+ characters with upper-case, lower-case, number, and symbol.</small></label>
             <label>Confirm password<input type="password" value={confirmation} onChange={(event) => setConfirmation(event.target.value)} autoComplete="new-password" required /></label>
             {error && <div className="login-error">{error}</div>}
-            <button type="submit" disabled={loading}>{loading ? "Sending code…" : "Send verification code"}</button>
+            <button type="submit" disabled={loading}>{loading ? "Creating account…" : "Create account"}</button>
           </form>}
           {mode === "verify" && <form onSubmit={verify}>
             <div className="demo-code"><span>EMAIL VERIFICATION</span><strong>6-digit code</strong><small>Check your inbox and spam folder. The code is sent by Amazon Cognito.</small></div>
