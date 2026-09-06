@@ -3,8 +3,10 @@ import {
   confirmViewerRegistration,
   getCurrentUser,
   loginWithPassword,
+  registerDemoViewer,
   startViewerRegistration,
 } from "../api/auth";
+import { ApiError } from "../api/client";
 import type { CurrentUser } from "../api/types";
 import { clearAccessToken, readAccessToken, saveAccessToken } from "../auth/session";
 
@@ -15,7 +17,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<CurrentUser>;
-  requestViewerCode: (name: string, email: string, password: string) => Promise<void>;
+  requestViewerCode: (name: string, email: string, password: string) => Promise<CurrentUser | undefined>;
   createViewer: (
     email: string,
     password: string,
@@ -58,11 +60,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return session.user;
     },
     requestViewerCode: async (name, email, password) => {
-      await startViewerRegistration(
-        name.trim(),
-        email.trim().toLowerCase(),
-        password,
-      );
+      const cleanName = name.trim();
+      const normalizedEmail = email.trim().toLowerCase();
+      try {
+        await startViewerRegistration(cleanName, normalizedEmail, password);
+        return undefined;
+      } catch (caught) {
+        if (!(caught instanceof ApiError) || caught.status !== 503) throw caught;
+        const session = await registerDemoViewer(cleanName, normalizedEmail, password);
+        saveAccessToken(session.access_token);
+        setUser(session.user);
+        return session.user;
+      }
     },
     createViewer: async (email, password, verificationCode) => {
       const normalizedEmail = email.trim().toLowerCase();
