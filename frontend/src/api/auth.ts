@@ -25,6 +25,18 @@ export function startViewerRegistration(displayName: string, email: string, pass
   });
 }
 
+export function registerDemoViewer(displayName: string, email: string, password: string) {
+  return apiFetch<AuthSession>("/api/auth/register-viewer/demo", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      display_name: displayName,
+      email,
+      password,
+    }),
+  });
+}
+
 export function confirmViewerRegistration(email: string, verificationCode: string) {
   return apiFetch<ApiMessage>("/api/auth/register-viewer/confirm", {
     method: "POST",
