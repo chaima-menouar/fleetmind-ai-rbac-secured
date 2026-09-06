@@ -32,12 +32,17 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
     });
 
     if (!response.ok) {
-      if (response.status === 401 && !path.startsWith("/api/auth/")) {
+      const body = (await response.json().catch(() => null)) as { detail?: string } | null;
+      const detail = body?.detail ?? `Request failed (${response.status})`;
+      const invalidSession =
+        response.status === 401 &&
+        /session|token|expired|valid session|verified session/i.test(detail);
+
+      if (invalidSession && !path.startsWith("/api/auth/")) {
         clearAccessToken();
         window.dispatchEvent(new Event("fleetmind:unauthorized"));
       }
-      const body = (await response.json().catch(() => null)) as { detail?: string } | null;
-      throw new ApiError(body?.detail ?? `Request failed (${response.status})`, response.status);
+      throw new ApiError(detail, response.status);
     }
     return (await response.json()) as T;
   } finally {
